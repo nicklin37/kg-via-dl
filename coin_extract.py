@@ -57,10 +57,10 @@ def scrape(coin, numtweet, filename):
 
 if __name__ == '__main__':
     # credentials for Academic Research Twitter API
-    consumer_key = "qBlrqapuTvDreZNzOdS8g4dnu"
-    consumer_secret = "jlaEzduOdHHEyR64sfJh2PJTg72kwXKR7IhPqawD6lJf3StgP2"
-    access_key = "1460353844395720704-UF1QRynvk3bnD4nU99KykutSrmvkRh"
-    access_secret = "5B7XYpSJ4qDFrLpK0GGNDxf2r66rfJVscrvwohwnyh11a"
+    consumer_key = "CONSUMER_KEY"
+    consumer_secret = "CONSUMER_SECRET"
+    access_key = "ACCESS_KEY"
+    access_secret = "ACCESS_SECRET"
     auth = tweepy.OAuthHandler(consumer_key, consumer_secret)
     auth.set_access_token(access_key, access_secret)
     api = tweepy.API(auth)
