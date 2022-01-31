@@ -1,0 +1,487 @@
+RippleLabsInc,2014
+The Ripple Protocol Consensus Algorithm
+David Schwartz
+This paper does not reflect the current state of the ledger consensus protocol or its 
+david@ripple.com analysis. We will continue hosting this draft for historical interest, but it SHOULD NOT be 
+used as a reference. For an updated analysis and presentation of the consensus 
+protocol, please refer to arXiv:1802.07242 (https://arxiv.org/abs/1802.07242), released 
+Noah Youngs 20 February 2018.
+nyoungs@nyu.edu
+Arthur Britto
+arthur@ripple.com
+Abstract
+While several consensus algorithms exist for the Byzantine Generals Problem, speciﬁcally as it
+pertains to distributed payment systems, many suffer from high latency induced by the requirement
+that all nodes within the network communicate synchronously. In this work, we present a novel
+consensus algorithm that circumvents this requirement by utilizing collectively-trusted subnetworks
+within the larger network. We show that the “trust” required of these subnetworks is in fact minimal
+and can be further reduced with principled choice of the member nodes. In addition, we show that
+minimal connectivity is required to maintain agreement throughout the whole network. The result is a
+low-latency consensus algorithm which still maintains robustness in the face of Byzantine failures. We
+present this algorithm in its embodiment in the Ripple Protocol.
+Contents 1. Introduction
+1 Introduction 1
+Interestandresearchindistributedconsensussystems
+2 Deﬁnitions,FormalizationandPreviousWork2 has increased markedly in recent years, with a central
+2.1Ripple Protocol Components ........... 2 focusbeingondistributedpaymentnetworks. Suchnet-
+worksallowforfast,low-costtransactionswhicharenot
+2.2Formalization ........................ 3
+controlledbyacentralizedsource. Whiletheeconomic
+2.3Existing Consensus Algorithms ......... 3
+beneﬁtsanddrawbacksofsuchasystemareworthyof
+2.4Formal Consensus Goals .............. 3
+muchresearchinandofthemselves,thisworkfocuses
+3 RippleConsensusAlgorithm 4 onsomeofthetechnicalchallengesthatalldistributed
+paymentsystemsmustface. Whiletheseproblemsare
+3.1Deﬁnition ........................... 4
+varied,wegroupthemintothreemaincategories: cor-
+3.2Correctness ......................... 4
+rectness,agreement,andutility.
+3.3Agreement .......................... 5 By correctness, we mean that it is necessary for a
+3.4Utility .............................. 5 distributedsystemtobeabletodiscernthedifferencebe-
+tweenacorrectandfraudulenttransaction. Intraditional
+Convergence HeuristicsandProcedures
+•
+ﬁduciary settings, this is done through trust between
+4 SimulationCode 7
+institutionsandcryptographicsignaturesthatguarantee
+5 Discussion 7 atransactionisindeedcomingfromtheinstitutionthat
+6 Acknowledgments 8 it claims to be coming from. In distributed systems,
+however, there is no such trust, as the identity of any
+References 8
+andallmembersinthenetworkmaynotevenbeknown.
+Therefore,alternativemethodsforcorrectnessmustbe
+1
+utilized. a distributed payment system must be robust both in
+Agreement refers to the problem of maintaining a thefaceofstandardfailures,andso-called“Byzantine”
+singleglobaltruthinthefaceofadecentralizedaccount- failures,whichmaybecoordinatedandoriginatefrom
+ing system. While similar to the correctness problem, multiplesourcesinthenetwork.
+the difference lies in the fact that while a malicious Inthiswork,weanalyzeoneparticularimplemen-
+user of the network may be unable to create a fraudu- tationofadistributedpaymentsystem: theRipplePro-
+lenttransaction(defyingcorrectness),itmaybeableto tocol. We focus on the algorithms utilized to achieve
+create multiple correct transactions that are somehow the above goals of correctness, agreement, and utility,
+unaware of each other, and thus combine to create a andshowthatallaremet(withinnecessaryandpredeter-
+fraudulentact. Forexample,amalicioususermaymake minedtolerancethresholds,whicharewell-understood).
+twosimultaneouspurchases,withonlyenoughfundsin Inaddition,weprovidecodethatsimulatestheconsen-
+their account to cover each purchase individually, but susprocesswithparameterizablenetworksize,number
+not both together. Thus each transaction by itself is ofmalicioususers,andmessage-sendinglatencies.
+correct, but if executed simultaneously in such a way
+that the distributed network as a whole is unaware of 2. Deﬁnitions, Formalization and
+both, a clear problem arises, commonly referred to as Previous Work
+the“Double-SpendProblem”[1]. Thustheagreement We begin by deﬁning the components of the Ripple
+problemcanbesummarizedastherequirementthatonly Protocol. Inordertoprovecorrectness,agreement,and
+onesetofgloballyrecognizedtransactionsexistinthe utilityproperties,weﬁrstformalizethosepropertiesinto
+network. axioms. Theseproperties,whengroupedtogether,form
+Utilityisaslightlymoreabstractproblem,whichwe thenotionofconsensus: thestateinwhichnodesinthe
+deﬁnegenerallyasthe“usefulness”ofadistributedpay- network reach correct agreement. We then highlight
+mentsystem,butwhichinpracticemostoftensimpliﬁes somepreviousresultsrelatingtoconsensusalgorithms,
+tothelatencyofthesystem. Adistributedsystemthat and ﬁnally state the goals of consensus for the Ripple
+isbothcorrectandinagreementbutwhichrequiresone Protocolwithinourformalizationframework.
+yeartoprocessatransaction,forexample,isobviously
+aninviablepaymentsystem. Additionalaspectsofutil- 2.1 Ripple Protocol Components
+itymayincludethelevelofcomputingpowerrequired Webeginourdescriptionoftheripplenetworkbydeﬁn-
+toparticipateinthecorrectnessandagreementprocesses ingthefollowingterms:
+or the technical proﬁciency required of an end user to
+Server: AserverisanyentityrunningtheRipple
+avoidbeingdefraudedinthenetwork. •
+Serversoftware(asopposedtotheRippleClient
+Manyoftheseissueshavebeenexploredlongbefore
+softwarewhichonlyletsausersendandreceive
+theadventofmoderndistributedcomputersystems,via
+funds), which participates in the consensus pro-
+aproblemknownasthe“ByzantineGeneralsProblem”
+cess.
+[2]. In this problem, a group of generals each control
+aportionofanarmyandmustcoordinateanattackby Ledger: The ledger is a record of the amount
+•
+sending messengers to each other. Because the gener- ofcurrencyineachuser’saccountandrepresents
+als are in unfamiliar and hostile territory, messengers the“groundtruth”ofthenetwork. Theledgeris
+may fail to reach their destination (just as nodes in a repeatedlyupdatedwithtransactionsthatsuccess-
+distributednetworkmayfail,orsendcorrupteddatain- fullypassthroughtheconsensusprocess.
+stead of the intended message). An additional aspect
+Last-Closed Ledger: The last-closed ledger is
+of the problem is that some of the generals may be •
+themostrecentledgerthathasbeenratiﬁedbythe
+traitors,eitherindividually,orconspiringtogether,and
+consensusprocessandthusrepresentsthecurrent
+somessagesmayarrivewhichareintendedtocreatea
+stateofthenetwork.
+falseplanthatisdoomedtofailurefortheloyalgener-
+als(justasmaliciousmembersofadistributedsystem
+Open Ledger: The open ledger is the current
+•
+mayattempttoconvincethesystemtoacceptfraudulent
+operatingstatusofanode(eachnodemaintains
+transactions, or multiple versions of the same truthful
+its own open ledger). Transactions initiated by
+transactionthatwouldresultinadouble-spend). Thus
+endusersofagivenserverareappliedtotheopen
+2
+ledgerofthatserver,buttransactionsarenotcon- previousworkhasincludedextensionstocaseswhereall
+sidered ﬁnal until they have passed through the participantsinthenetworkarenotknownaheadoftime,
+consensusprocess,atwhichpointtheopenledger where the messages are sent asynchronously (there is
+becomesthelast-closedledger. noboundontheamountoftimeanindividualnodewill
+taketoreachadecision),andwherethereisadelineation
+UniqueNodeList(UNL): Eachserver,s,main- betweenthenotionofstrongandweakconsensus.
+•
+tains a unique node list, which is a set of other
+One pertinent result of previous work on consen-
+serversthatsquerieswhendeterminingconsen-
+susalgorithmsisthatofFischer,Lynch,andPatterson,
+sus. Onlythevotesoftheothermembersofthe
+1985 [4], which proves that in the asynchronous case,
+UNLofsareconsideredwhendeterminingcon-
+non-termination is always a possibility for a consen-
+sensus(asopposedtoeverynodeonthenetwork).
+sus algorithm, even with just one faulty process. This
+ThustheUNLrepresentsasubsetofthenetwork
+introduces the necessity for time-based heuristics, to
+which when taken collectively, is “trusted” by s
+ensure convergence (or at least repeated iterations of
+to not collude in an attempt to defraud the net-
+non-convergence). Weshalldescribetheseheuristicsfor
+work. Notethatthisdeﬁnitionof“trust”doesnot
+theRippleProtocolinsection3.
+requirethateachindividualmemberoftheUNL
+The strength of a consensus algorithm is usually
+betrusted(seesection3.2).
+measured in terms of the fraction of faulty processes
+it can tolerate. It is provable that no solution to the
+Proposer: Anyservercanbroadcasttransactions
+• Byzantine Generals problem (which already assumes
+tobeincludedintheconsensusprocess,andevery
+synchronicity,andknownparticipants)cantoleratemore
+serverattemptstoincludeeveryvalidtransaction
+than(n 1)/3byzantinefaults,or33%ofthenetwork
+when a new consensus round starts. During the  
+actingmaliciously[2]. Thissolutiondoesnot,however,
+consensusprocess,however,onlyproposalsfrom
+requireveriﬁableauthenticityofthemessagesdelivered
+serversontheUNLofaserversareconsidered
+betweennodes(digitalsignatures). Ifaguaranteeonthe
+bys.
+unforgeability of messages is possible, algorithms ex-
+istwithmuchhigherfaulttoleranceinthesynchronous
+2.2 Formalization
+case.
+We use the term nonfaulty to refer to nodes in the net-
+Several algorithms with greater complexity have
+workthatbehavehonestlyandwithouterror. Conversely,
+been proposed for Byzantine consensus in the asyn-
+afaultynodeisonewhichexperienceserrorswhichmay
+chronous case. FaB Paxos [5] will tolerate (n 1)/5
+be honest (due to data corruption, implementation er-  
+Byzantinefailuresinanetworkofnnodes,amounting
+rors,etc.),ormalicious(Byzantineerrors). Wereduce
+to a tolerance of up to 20% of nodes in the network
+thenotionofvalidatingatransactiontoasimplebinary
+colluding maliciously. Attiya, Doyev, and Gill [3] in-
+decisionproblem: eachnodemustdecidefromthein-
+troduce a phase algorithm for the asynchronous case,
+formationithasbeengivenonthevalue0or1.
+which can tolerate (n 1)/4 failures, or up to 25% of
+As in Attiya, Dolev, and Gill, 1984 [3], we deﬁne  
+the network. Lastly, Alchieri et al., 2008 [6] present
+consensusaccordingtothefollowingthreeaxioms:
+BFT-CUP,whichachievesByzantineconsensusinthe
+asynchronouscaseevenwithunknownparticipants,with
+1. (C1): Everynonfaultynodemakesadecisionin
+themaximalboundofatoleranceof(n 1)/3failures,
+ﬁnitetime
+ 
+but with additional restrictions on the connectivity of
+2. (C2): All nonfaulty nodes reach the same deci-
+theunderlyingnetwork.
+sionvalue
+3. (C3): 0and1arebothpossiblevaluesforallnon-
+faulty nodes. (This removes the trivial solution 2.4 Formal Consensus Goals
+inwhichallnodesdecide0or1regardlessofthe Our goal in this work is to show that the consensus
+informationtheyhavebeenpresented). algorithmutilizedbytheRippleProtocolwillachieve
+consensusateachledger-close(evenifconsensusisthe
+2.3 Existing Consensus Algorithms trivialconsensusofalltransactionsbeingrejected),and
+Therehasbeenmuchresearchdoneonalgorithmsthat that the trivial consensus will only be reached with a
+achieveconsensusinthefaceofByzantineerrors. This knownprobability,eveninthefaceofByzantinefailures.
+3
+Sinceeachnodeinthenetworkonlyvotesonproposals on a transaction. All transactions that meet this
+fromatrustedsetofnodes(theothernodesinitsUNL), requirement are applied to the ledger, and that
+andsinceeachnodemayhavedifferingUNLs,wealso ledger is closed, becoming the new last-closed
+showthatonlyoneconsensuswillbereachedamongst ledger.
+allnodes,regardlessofUNLmembership. Thisgoalis
+alsoreferredtoaspreventinga“fork”inthenetwork: a 3.2 Correctness
+situationinwhichtwodisjointsetsofnodeseachreach Inordertoachievecorrectness,givenamaximalamount
+consensusindependently,andtwodifferentlast-closed of Byzantine failures, it must be shown that it is im-
+ledgersareobservedbynodesoneachnode-set. possible for a fraudulent transaction to be conﬁrmed
+Lastly we will show that the Ripple Protocol can during consensus, unless the number of faulty nodes
+achieve these goals in the face of (n 1)/5 failures, exceedsthattolerance. Theproofofthecorrectnessof
+ 
+whichisnotthestrongestresultintheliterature,butwe theRPCAthenfollowsdirectly: sinceatransactionis
+willalsoshowthattheRippleProtocolpossessesseveral only approved if 80% of the UNL of a server agrees
+otherdesirablefeaturesthatgreatlyenhanceitsutility. withit,aslongas80%oftheUNLishonest,nofraud-
+ulent transactions will be approved. Thus for a UNL
+ofnnodesinthenetwork,theconsensusprotocolwill
+3. Ripple Consensus Algorithm
+maintaincorrectnesssolongas:
+The Ripple Protocol consensus algorithm (RPCA), is
+appliedeveryfewsecondsbyallnodes,inordertomain- f (n 1)/5 (1)
+  
+tainthecorrectnessandagreementofthenetwork. Once
+consensus is reached, the current ledger is considered where f isthenumberByzantinefailures. Infact,even
+“closed” and becomes the last-closed ledger. Assum- inthefaceof(n 1)/5+1Byzantinefailures,correct-
+ 
+ingthattheconsensusalgorithmissuccessful,andthat nessisstilltechnicallymaintained. Theconsensuspro-
+there is no fork in the network, the last-closed ledger cesswillfail,butitwillstillnotbepossibletoconﬁrma
+maintainedbyallnodesinthenetworkwillbeidentical. fraudulenttransaction. Indeeditwouldtake(4n+1)/5
+Byzantinefailuresforanincorrecttransactiontobecon-
+3.1 Deﬁnition ﬁrmed. Wecallthissecondboundtheboundforweak
+TheRPCAproceedsinrounds. Ineachround: correctness,andtheformertheboundforstrongcorrect-
+ness.
+Initially,eachservertakesallvalidtransactionsit Itshouldalsobenotedthatnotall“fraudulent”trans-
+•
+hasseenpriortothebeginningoftheconsensus actionsposeathreat,evenifconﬁrmedduringconsen-
+round that have not already been applied (these sus. Should a user attempt to double-spend funds in
+may include new transactions initiated by end- twotransactions,forexample,evenifbothtransactions
+users of the server, transactions held over from are conﬁrmed during the consensus process, after the
+a previous consensus process, etc.), and makes ﬁrst transaction is applied, the second will fail, as the
+them public in the form of a list known as the fundsarenolongeravailable. Thisrobustnessisdueto
+“candidateset”. the fact that transactions are applied deterministically,
+andthatconsensusensuresthatallnodesinthenetwork
+Eachserverthenamalgamatesthecandidatesets
+• are applying the deterministic rules to the same set of
+ofallserversonitsUNL,andvotesontheveracity
+transactions.
+ofalltransactions.
+Foraslightlydifferentanalysis,letusassumethat
+Transactionsthatreceivemorethanaminimum theprobabilitythatanynodewilldecidetocolludeand
+•
+percentageof“yes”votesarepassedontothenext join a nefarious cartel is pc. Then the probability of
+round,ifthereisone,whiletransactionsthatdo correctnessisgivenby p⇤,where:
+notreceiveenoughvoteswilleitherbediscarded,
+orincludedinthecandidatesetforthebeginning d(n 51)e n
+p = Â pi(1 p )n i (2)
+oftheconsensusprocessonthenextledger. ⇤ i c   c  
+i=0 ✓ ◆
+Theﬁnalroundofconsensusrequiresaminimum Thisprobabilityrepresentsthelikelihoodthatthesize
+•
+percentage of 80% of a server’s UNL agreeing ofthenefariouscartelwillremainbelowthemaximal
+4
+threshold of Byzantine failures, given p . Since this
+c
+likelihoodisabinomialdistribution,valuesof p greater
+c
+than20%willresultinexpectedcartelsofsizegreater
+than20%ofthenetwork,thwartingtheconsensuspro-
+cess. In practice, a UNL is not chosen randomly, but
+ratherwiththeintenttominimize p . Sincenodesare
+c
+notanonymousbutrathercryptographicallyidentiﬁable,
+selectingaUNLofnodesfromamixtureofcontinents,
+nations,industries,ideologies,etc. willproducevalues
+of p muchlowerthan20%. Asanexample,theproba-
+c
+bilityoftheAnti-DefamationLeagueandtheWestboro
+BaptistChurchcolludingtodefraudthenetwork,iscer-
+tainlymuch,muchsmallerthan20%. EveniftheUNL
+has a relatively large p , say 15%, the probability of
+c
+correctnessisextremelyhighevenwithonly200nodes
+intheUNL:97.8%.
+Agraphicalrepresentationofhowtheprobabilityof Figure2. Anexampleoftheconnectivityrequiredto
+incorrectnessscalesasafunctionofUNLsizefordiffer- preventaforkbetweentwoUNLcliques.
+ingvaluesof p isdepictedinFigure1. Notethathere
+c
+theverticalaxisrepresentstheprobabilityofanefarious
+proveagreementisgivenby:
+cartelthwartingconsensus,andthuslowervaluesindi-
+categreaterprobabilityofconsensussuccess. Ascanbe 1
+UNL UNL max(UNL , UNL ) i,j (3)
+i j i j
+seen in the ﬁgure, even with a p as high as 10%, the | \ |  5 | | | | 8
+c
+probability of consensus being thwarted very quickly
+This upper bound assumes a clique-like structure of
+becomesnegligibleastheUNLgrowspast100nodes.
+UNLs,i.e. nodesformsetswhoseUNLscontainother
+nodes in those sets. This upper bound guarantees that
+3.3 Agreement notwocliquescanreachconsensusonconﬂictingtrans-
+Tosatisfytheagreementrequirement,itmustbeshown actions, sinceitbecomesimpossibletoreachthe80%
+that all nonfaulty nodes reach consensus on the same threshold required for consensus. A tighter bound is
+set of transactions, regardless of their UNLs. Since possiblewhenindirectedgesbetweenUNLsaretaken
+the UNLs for each server can be different, agreement intoaccountaswell. Forexample,ifthestructureofthe
+is not inherently guaranteed by the correctness proof. networkisnotclique-like,aforkbecomesmuchmore
+Forexample,iftherearenorestrictionsonthemember- difﬁculttoachieve,duetothegreaterentanglementof
+shipoftheUNL,andthesizeoftheUNLisnotlarger theUNLsofallnodes.
+than 0.2 ntotal where ntotal is the number of nodes in Itisinterestingtonotethatnoassumptionsaremade
+⇤
+the entire network, then a fork is possible. This is il- aboutthenatureoftheintersectingnodes. Theintersec-
+lustrated by a simple example (depicted in ﬁgure 2): tionoftwoUNLsmayincludefaultynodes,butsolong
+imaginetwocliqueswithintheUNLgraph,eachlarger as the size of the intersection is larger than the bound
+than 0.2 ntotal. By cliques, we mean a set of nodes requiredtoguaranteeagreement,andthetotalnumber
+⇤
+where each node’s UNL is the selfsame set of nodes. offaultynodesislessthantheboundrequiredtosatisfy
+Because these two cliques do not share any members, strongcorrectness,thenbothcorrectnessandagreement
+it is possible for each to achieve a correct consensus willbeachieved. Thatistosay,agreementisdependent
+independently of each other, violating agreement. If solelyonthesizeoftheintersectionofnodes,notonthe
+theconnectivityofthetwocliquessurpasses0.2 ntotal, sizeoftheintersectionofnonfaultynodes.
+⇤
+then a fork is no longer possible, as disagreement be-
+tweenthecliqueswouldpreventconsensusfrombeing 3.4 Utility
+reachedatthe80%agreementthresholdthatisrequired. While many components of utility are subjective, one
+thatisindeedprovableisconvergence: thattheconsen-
+An upper bound on the connectivity required to susprocesswillterminateinﬁnitetime.
+5
+Figure1. ProbabilityofanefariouscartelbeingabletothwartconsensusasafunctionofthesizeoftheUNL,for
+differentvaluesof p ,theprobabilitythatanymemberoftheUNLwilldecidetocolludewithothers. Here,lower
+c
+valuesindicateahigherprobabilityofconsensussuccess.
+3.4.1 Convergence Sincetheconsensusalgorithmitselfisdeterministic,
+andhasapresetnumberofrounds,t,beforeconsensus
+WedeﬁneconvergenceasthepointinwhichtheRPCA
+isterminated,andthecurrentsetoftransactionsarede-
+reachesconsensuswithstrongcorrectnessontheledger,
+clared approved or not-approved (even if at this point
+andthatledgerthenbecomesthelast-closedledger. Note
+notransactionshavemorethanthe80%requiredagree-
+thatwhiletechnicallyweakcorrectnessstillrepresents
+ment,andtheconsensusisonlythetrivialconsensus),
+convergenceofthealgorithm,itisonlyconvergencein
+thelimitingfactorfortheterminationofthealgorithm
+the trivial case, as proposition C3 is violated, and no
+isthecommunicationlatencybetweennodes. Inorder
+transactions will ever be conﬁrmed. From the results
+to bound this quantity, the response-time of nodes is
+above,weknowthatstrongcorrectnessisalwaysachiev-
+monitored,andnodeswho’slatencygrowslargerthan
+able in the face of up to (n 1)/5 Byzantine failures,
+  a preset bound b are removed from all UNLs. While
+and that only one consensus will be achieved in the
+this guarantees that consensus will terminate with an
+entirenetworksolongastheUNL-connectednesscon-
+upperboundoftb,itisimportanttonotethatthebounds
+ditionismet(Equation3). Allthatremainsistoshow
+described for correctness and agreement above must
+thatwhenbothoftheseconditionsaremet,consensusis
+be met by the ﬁnal UNL, after all nodes that will be
+reachedinﬁnitetime.
+6
+droppedhavebeendropped. Iftheconditionsholdfor validation”,inwhichtheydonotprocessorvote
+theinitialUNLsforallnodes,butthensomenodesare on transactions, but declare that are still partic-
+droppedfromthenetworkduetolatency,thecorrectness ipating in the consensus process, as opposed to
+andagreementguaranteesdonotautomaticallyholdbut adifferentconsensusprocessonadisconnected
+mustbesatisﬁedbythenewsetofUNLs. subnetwork.
+3.4.2 HeuristicsandProcedures WhileitwouldbepossibletoapplytheRPCAin
+•
+As mentioned above, a latency bound heuristic is en- justoneroundofconsensus,utilitycanbegained
+forcedonallnodesintheRippleNetworktoguarantee through multiple rounds, each with an increas-
+that the consensus algorithm will converge. In addi- ingminimum-requiredpercentageofagreement,
+tion,thereareafewotherheuristicsandproceduresthat beforetheﬁnalroundwithan80%requirement.
+provideutilitytotheRPCA. Theseroundsallowfordetectionoflatentnodes
+in the case that a few such nodes are creating a
+There is a mandatory 2 second window for all
+• bottleneckinthetransactionrateofthenetwork.
+nodes to propose their initial candidate sets in
+Thesenodeswillbeabletoinitiallykeepupdur-
+each round of consensus. While this does intro-
+ingthelower-requirementroundsbutfallbehind
+ducealowerboundof2secondstoeachconsen-
+andbeidentiﬁedasthethresholdincreases. Inthe
+sus round, it also guarantees that all nodes with
+caseofoneroundofconsensus,itmaybethecase
+reasonablelatencywillhavetheabilitytopartici-
+thatsofewtransactionspassthe80%threshold,
+pateintheconsensusprocess.
+that even slow nodes can keep up, lowering the
+As the votes are recorded in the ledger for each transactionrateoftheentirenetwork.
+•
+round of consensus, nodes can be ﬂagged and
+removed from the network for some common,
+4. Simulation Code
+easily-identiﬁablemaliciousbehaviors. Thesein-
+Theprovidedsimulationcodedemonstratesaroundof
+cludenodesthatvote“No”oneverytransaction,
+RPCA, with parameterizable features (the number of
+andnodesthatconsistentlyproposetransactions
+nodesinthenetwork,thenumberofmaliciousnodes,la-
+whicharenotvalidatedbyconsensus.
+tencyofmessages,etc.). Thesimulatorbeginsinperfect
+A curated default UNL is provided to all users, disagreement(halfofthenodesinthenetworkinitially
+•
+whichischosentominimize p ,describedinsec- propose“yes”,whiletheotherhalfpropose“no”),then
+c
+tion3.2. Whileuserscanandshouldselecttheir proceedswiththeconsensusprocess,showingateach
+ownUNLs, thisdefaultlistofnodesguarantees stagethenumberofyes/novotesinthenetworkasnodes
+thatevennaiveuserswillparticipateinaconsen- adjusttheirproposalsbasedupontheproposalsoftheir
+sus process that achieves correctness and agree- UNL members. Once the 80% threshold is reached,
+mentwithextremelyhighprobability. consensusisachieved. Weencouragethereadertoex-
+perimentwithdifferentvaluesoftheconstantsdeﬁnedat
+A network split detection algorithm is also em-
+thebeginningof“Sim.cpp”,inordertobecomefamiliar
+•
+ployed to avoid a fork in the network. While
+withtheconsensusprocessunderdifferentconditions.
+theconsensusalgorithmcertiﬁesthatthetransac-
+tionsonthelast-closedledgerarecorrect,itdoes
+5. Discussion
+notprohibitthepossibilityofmorethanonelast-
+closedledgerexistingondifferentsubsectionsof WehavedescribedtheRPCA,whichsatisﬁesthecon-
+the network with poor connectivity. To try and ditionsofcorrectness,agreement,andutilitywhichwe
+identify if such a split has occurred, each node haveoutlinedabove. TheresultisthattheRipplePro-
+monitors the size of the active members of its tocolisabletoprocesssecureandreliabletransactions
+UNL.Ifthissizesuddenlydropsbelowapreset inamatterofseconds: thelengthoftimerequiredfor
+threshold,itispossiblethatasplithasoccurred. oneroundofconsensustocomplete. Thesetransactions
+In order to prevent a false positive in the case are provably secure up to the bounds outlined in sec-
+where a large section of a UNL has temporary tion 3, which, while not the strongest available in the
+latency, nodes are allowed to publish a “partial literature for Asynchronous Byzantine consensus, do
+7
+allowforrapidconvergenceandﬂexibilityinnetwork [4] Fischer,MichaelJ.,NancyA.Lynch,andMichael
+membership. Whentakentogether,thesequalitiesallow S.Paterson.“Impossibilityofdistributedconsensus
+the Ripple Network to function as a fast and low-cost withonefaultyprocess.”JournaloftheACM(JACM)
+globalpaymentnetworkwithwell-understoodsecurity 32.2(1985): 374-382.
+andreliabilityproperties.
+[5] Martin, J-P., and Lorenzo Alvisi. “Fast byzan-
+While we have shown that the Ripple Protocol is
+tineconsensus.”DependableandSecureComputing,
+provablysecuresolongastheboundsdescribedinequa-
+IEEETransactionson3.3(2006): 202-215.
+tions 1 and 3 are met, it is worth noting that these are
+[6] Alchieri, Eduardo AP, et al.“Byzantine consensus
+maximal bounds, and in practice the network may be
+withunknownparticipants.”PrinciplesofDistributed
+secure under signiﬁcantly less stringent conditions. It
+Systems.SpringerBerlinHeidelberg,2008.22-40.
+isalsoimportanttorecognize,however,thatsatisfying
+these bounds is not inherent to the RPCA itself, but
+rather requires management of the UNLs of all users.
+ThedefaultUNLprovidedtoallusersisalreadysufﬁ-
+cient, but should a user make changes to the UNL, it
+mustbedonewithknowledgeoftheabovebounds. In
+addition,somemonitoringoftheglobalnetworkstruc-
+ture is required in order to ensure that the bound in
+equation 3 is met, and that agreement will always be
+satisﬁed.
+WebelievetheRPCArepresentsasigniﬁcantstep
+forward for distributed payment systems, as the low-
+latencyallowsformanytypesofﬁnancialtransactions
+previouslymadedifﬁcultorevenimpossiblewithother,
+higherlatencyconsensusmethods.
+6. Acknowledgments
+RippleLabswouldliketoacknowledgeallofthepeo-
+pleinvolvedinthedevelopmentoftheRippleProtocol
+consensusalgorithm. Speciﬁcally,ArthurBritto,forhis
+workontransactionsets,JedMcCaleb,fortheoriginal
+RippleProtocolconsensusconcept,andDavidSchwartz,
+forhisworkonthe“failuretoagreeisagreementtode-
+fer”aspectofconsensus. RippleLabswouldalsoliketo
+acknowledgeNoahYoungsforhiseffortsinpreparing
+andreviewingthispaper.
+References
+[1] Nakamoto, Satoshi. “Bitcoin: A peer-to-peer elec-
+troniccashsystem.”Consulted1.2012(2008): 28.
+[2] Lamport, Leslie, Robert Shostak, and Marshall
+Pease. “The Byzantine generals problem.” ACM
+Transactions on Programming Languages and Sys-
+tems(TOPLAS)4.3(1982): 382-401.
+[3] Attiya, C., D. Dolev, and J. Gill. “Asynchronous
+Byzantine Agreement.” Proc. 3rd. Annual ACM
+SymposiumonPrinciplesofDistributedComputing.
+1984.
+8

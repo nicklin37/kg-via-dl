@@ -1,0 +1,1573 @@
+POLKADOT: VISION FOR A HETEROGENEOUS MULTI-CHAIN FRAMEWORK
+DRAFT 1
+DR.GAVINWOOD
+FOUNDER,ETHEREUM&PARITY
+GAVIN@PARITY.IO
+Abstract. Present-dayblockchainarchitecturesallsuﬀerfromanumberofissuesnotleastpracticalmeansofextensi-
+bilityandscalability. Webelievethisstemsfromtyingtwoveryimportantpartsoftheconsensusarchitecture,namely
+canonicality andvalidity,toocloselytogether. Thispaperintroducesanarchitecture,theheterogeneousmulti-chain,
+whichfundamentallysetsthetwoapart.
+Incompartmentalisingthesetwoparts,andbykeepingtheoverallfunctionalityprovidedtoanabsoluteminimum
+ofsecurity andtransport,weintroducepracticalmeansofcoreextensibilityinsitu. Scalabilityisaddressedthrough
+a divide-and-conquer approach to these two functions, scaling out of its bonded core through the incentivisation of
+untrustedpublicnodes.
+The heterogeneous nature of this architecture enables many highly divergent types of consensus systems interop-
+eratinginatrustless,fullydecentralised“federation”,allowingopenandclosednetworkstohavetrust-freeaccessto
+eachother.
+We put forward a means of providing backwards compatibility with one or more pre-existing networks such as
+Ethereum. Webelievethatsuchasystemprovidesausefulbase-levelcomponentintheoverallsearchforapractically
+implementablesystemcapableofachievingglobal-commercelevelsofscalabilityandprivacy.
+1. Preface technological promise and grand talk, we have yet to see
+signiﬁcant real-world deployment of present technology.
+This is intended to be a technical “vision” summary
+Webelievethatthisisdowntoﬁvekeyfailuresofpresent
+ofonepossibledirectionthatmaybetakeninfurtherde-
+technology stacks:
+veloping the blockchain paradigm together with some ra-
+tionale as to why this direction is sensible. It lays out in Scalability: Howmuchresourcesarespentglobally
+as much detail as is possible at this stage of development onprocessing,bandwidthandstorageforthesys-
+a system which may give a concrete improvement on a temtoprocessasingletransactionandhowmany
+number of aspects of blockchain technology. transactions can be reasonably processed under
+It is not intended to be a speciﬁcation, formal or oth- peak conditions?
+erwise. Itisnotintendedtobecomprehensivenortobea Isolatability: Can the divergent needs of multiple
+ﬁnal design. It is not intended to cover non-core aspects parties and applications be addressed to a near-
+of the framework such as APIs, bindings, languages and optimal degree under the same framework?
+usage. This is notably experimental; where parameters Developability: How well do the tools work? Do
+are speciﬁed, they are likely to change. Mechanisms will the APIs address the developers’ needs? Are ed-
+be added, reﬁned and removed in response to community ucational materials available? Are the right inte-
+ideasandcritiques. Largeportionsofthispaperwilllikely grations there?
+berevisedasexperimentalevidenceandprototypinggives Governance: Can the network remain ﬂexible to
+us information about what will work and what not. evolve and adapt over time? Can decisions be
+This document includes a core description of the pro- made with suﬃcient inclusivity, legitimacy and
+tocoltogetherwithideasfordirectionsthatmaybetaken transparency to provide eﬀective leadership of a
+to improve various aspects. It is envisioned that the core decentralised system?
+descriptionwillbeusedasthestartingpointforaninitial Applicability: Does the technology actually ad-
+seriesofproofs-of-concept. Aﬁnal“version1.0”wouldbe dress a burning need on its own? Is other “mid-
+based around this reﬁned protocol together with the ad- dleware” required in order to bridge the gap to
+ditional ideas that become proven and are determined to actual applications?
+be required for the project to reach its goals.
+In the present work, we aim to address the ﬁrst two
+issues: scalability and isolatability. That said, we believe
+1.1. History.
+thePolkadotframeworkcanprovidemeaningfulimprove-
+• 09/10/2016: 0.1.0-proof1
+ments in each of these classes of problems.
+• 20/10/2016: 0.1.0-proof2
+Modern, eﬃcient blockchain implementations such as
+• 01/11/2016: 0.1.0-proof3
+the Parity Ethereum client [17] can process in excess of
+• 10/11/2016: 0.1.0
+3,000 transactions per second when running on perfor-
+mant consumer hardware. However, current real-world
+2. Introduction
+blockchain networks are practically limited to around 30
+Blockchains have demonstrated great promise of util- transactions per second. This limitation mainly origi-
+ity over several ﬁelds including “Internet of Things” nates from the fact that the current synchronous consen-
+(IoT), ﬁnance, governance, identity management, web- sus mechanisms require wide timing margins of safety on
+decentralisation and asset-tracking. However, despite the theexpectedprocessingtime,whichisexacerbatedbythe
+1
+POLKADOT: VISION FOR A HETEROGENEOUS MULTI-CHAIN FRAMEWORK DRAFT 1 2
+desire to support slower implementations. This is due to the reader should be aware that certain mechanisms may
+the underlying consensus architecture: the state transi- be described (for example interoperation with other pub-
+tion mechanism, or the means by which parties collate lic networks) which are not directly relevant to Polkadot
+andexecutetransactions,hasitslogicfundamentallytied when deployed under non-public (“permissioned”) situa-
+into the consensus “canonicalisation” mechanism, or the tions.
+means by which parties agree upon one of a number of
+possible, valid, histories.
+This applies equally to both proof-of-work (PoW) sys-
+2.2. Previous work. Decouplingtheunderlyingconsen-
+temssuchasBitcoin[15]andEthereum[5,23]andproof-
+susfromthestate-transitionhasbeeninformallyproposed
+of-stake(PoS)systemssuchasNXT[8]andBitshares[12]:
+in private for at least two years—Max Kaye was a pro-
+allultimatelysuﬀerfromthesamehandicap. Itisasimple
+ponent of such a strategy during the very early days of
+strategythathelpedmakeblockchainsasuccess. However,
+Ethereum.
+bytightlycouplingthesetwomechanismsintoasingleunit
+A more complex scalable solution known as Chain
+oftheprotocol,wealsobundletogethermultiplediﬀerent
+ﬁbers,datingbacktoJune2014andﬁrstpublishedlater
+actors and applications with diﬀerent risk proﬁles, diﬀer- thatyear1,madethecaseforasinglerelay-chainandmul-
+ent scalability requirements and diﬀerent privacy needs.
+tiple homogeneous chains providing a transparent inter-
+Onesizedoesnotﬁtall. Toooftenitisthecasethatina
+chain execution mechanism. Decoherence was paid for
+desireforbroadappeal,anetworkadoptsadegreeofcon-
+through transaction latency—transactions requiring the
+servatism which results in a lowest-common-denominator
+coordination of disparate portions of the system would
+optimally serving few and ultimately leading to a failing
+take longer to process. Polkadot takes much of its ar-
+in the ability to innovate, perform and adapt, sometimes
+chitecturefromthatandthefollow-upconversationswith
+dramatically so.
+variouspeople,thoughitdiﬀersgreatlyinmuchofitsde-
+Some systems such as e.g. Factom [21] drop the state-
+sign and provisions.
+transition mechanism altogether. However, much of the
+While there are no systems comparable to Polkadot
+utilitythatwedesirerequirestheabilitytotransitionstate
+actually in production, several systems of some relevance
+according to a shared state-machine. Dropping it solves
+havebeenproposed,thoughfewinanysubstantiallevelof
+analternativeproblem;itdoesnotprovideanalternative
+detail. These proposals can be broken down into systems
+solution.
+which drop or reduce the notion of a globally coherent
+It seems clear, therefore, that one reasonable direction
+state machine, those which attempt to provide a globally
+to explore as a route to a scalable decentralised compute
+coherent singleton machine through homogeneous shards
+platform is to decouple the consensus architecture from
+and those which target only heterogeneity.
+the state-transition mechanism. And, perhaps unsurpris-
+ingly, this is the strategy that Polkadot adopts as a solu-
+tion to scalability.
+2.2.1. Systems without Global State. Factom[21]isasys-
+2.1. Protocol, Implementation and Network. Like temthatdemonstratescanonicalitywithouttheaccording
+Bitcoin and Ethereum, Polkadot refers at once to a net- validity, eﬀectively allowing the chronicling of data. Be-
+work protocol and the (hitherto presupposed) primary cause of the avoidance of global state and the diﬃculties
+public network that runs this protocol. Polkadot is in- withscalingwhichthisbrings,itcanbeconsideredascal-
+tended to be a free and open project, the protocol speci- able solution. However, as mentioned previously, the set
+ﬁcation being under a Creative Commons license and the of problems it solves is strictly and substantially smaller.
+code being placed under a FLOSS license. The project is Tangle [18] is a novel approach to consensus systems.
+developed in an open manner and accepts contributions Ratherthanarrangingtransactionsintoblocksandform-
+whereevertheyareuseful. AsystemofRFCs,notunlike ing consensus over a strictly linked list to give a glob-
+thePythonEnhancementProposals,willallowameansof ally canonical ordering of state-changes, it largely aban-
+publiclycollaboratingoverprotocolchangesandupgrades. donstheideaofaheavilystructuredorderingandinstead
+Our initial implementation of the Polkadot protocol pushes for a directed acyclic graph of dependent trans-
+will be known as the Parity Polkadot Platform and will actions with later items helping canonicalise earlier items
+include a full protocol implementation together with API through explicit referencing. For arbitrary state-changes,
+bindings. Like other Parity blockchain implementations, thisdependencygraphwouldquicklybecomeintractable,
+PPP is designed to be a general-purpose blockchain tech- howeverforthemuchsimplerUTXOmodel2thisbecomes
+nologystack,neitheruniquelyforapublicnetworknorfor quite reasonable. Because the system is only loosely co-
+private/consortiumoperation. Thedevelopmentofitthus herentandtransactionsaregenerallyindependentofeach
+far has been funded by several parties including through other, alargeamountofglobalparallelismbecomesquite
+a grant from the British government. natural. Using the UTXO model does have the eﬀect
+This paper nonetheless describes Polkadot under the of limiting Tangle to a purely value-transfer “currency”
+context of a public network. The functionality we envi- system rather than anything more general or extensible.
+sion in a public network is a superset of that required in Furthermore without the hard global coherency, interac-
+alternative(e.g.privateand/orconsortium)settings. Fur- tion with other systems—which tend to need an absolute
+thermore, in this context, the full scope of Polkadot can degreeknowledgeoverthesystemstate—becomesimprac-
+be more clearly described and discussed. This does mean tical.
+1https://github.com/ethereum/wiki/wiki/Chain-Fibers-Redux
+2unspenttransactionoutput,themodelthatBitcoinuseswherebythestateiseﬀectivelythesetofaddressassociatedwithsomevalue;
+transactionscollatesuchaddressesandreformthemintoanewsetofaddresseswhosesumtotalisequivalent
+POLKADOT: VISION FOR A HETEROGENEOUS MULTI-CHAIN FRAMEWORK DRAFT 1 3
+2.2.2. Heterogeneous Chain Systems. Side-chains [3] is a remainsunseenastohowCasperwilliterateinthefuture
+proposedadditiontotheBitcoinprotocolwhichwouldal- and what it will look like should it ﬁnally be deployed.
+low trustless interaction between the main Bitcoin chain While Casper and Polkadot both represent interest-
+and additional side-chains. There is no provision for any ing new protocols and, in some sense, augmentations of
+degree of ‘rich’ interaction between side-chains: the in- Ethereum, there are substantial diﬀerences between their
+teraction would be limited to allowing side-chains to be ultimate goals and paths to deployment. Casper is an
+custodians of each other’s assets, eﬀecting—in the local EthereumFoundation-centeredprojectoriginallydesigned
+jargon—a two-way peg3. The end vision is for a frame- to be a PoS alteration to the protocol with no desire to
+work where the Bitcoin currency could be provided with createafundamentallyscalableblockchain. Crucially,itis
+additional, if peripheral, functionality through pegging it designedtobeahard-fork,ratherthananythingmoreex-
+onto some other chains with more exotic state transition pansiveandthusallEthereumclientsanduserswouldbe
+systems than the Bitcoin protocol allows. In this sense, requiredtoupgradeorremainonaforkofuncertainadop-
+side-chains addresses extensibility rather than scalability. tion. Assuch,deploymentismadesubstantiallymoredif-
+Indeed,thereisfundamentallynoprovisionfortheva- ﬁcult as is inherent in a decentralised project where tight
+lidity of side-chains; tokens from one chain (e.g. Bitcoin) coordination is necessary.
+held on behalf of a side-chain are secured only by the Polkadot diﬀers in several ways; ﬁrst and foremost,
+side-chain’s ability to incentivise miners to canonicalise Polkadot is designed to be a fully extensible and scalable
+valid transitions. The security of the Bitcoin network blockchain development, deployment and interaction test
+cannot easily be transitioned to work on behalf of other bed. Itisbuilttobealargelyfuture-proofharnessableto
+blockchains. Furthermore,aprotocolforensuringBitcoin assimilatenewblockchaintechnologyasitbecomesavail-
+miners merge-mine (that is duplicate their canonicalisa- able without over-complicated decentralised coordination
+tion power onto that of the side-chain) and, more impor- or hard forks. We already envision several use cases such
+tantly, validate the side-chain’s transitions is outside the asencryptedconsortiumchainsandhigh-frequencychains
+scope of this proposal. with very low block times that are unrealistic to do in
+Cosmos [10] is a proposed multi-chain system in the any future version of Ethereum currently envisioned. Fi-
+same vein as side-chains, swapping the Nakamoto PoW nally, the coupling between it and Ethereum is extremely
+consensus method for Jae Kwon’s Tendermint algorithm. loose; no action on the part of Ethereum is necessary to
+Essentially, it describes multiple chains (operating in enable trustless transaction forwarding between the two
+zones) each using individual instances of Tendermint, to- networks.
+gether with a means for trust-free communication via a In short, while Casper/Ethereum 2.0 and Polkadot
+master hub chain. This interchain communication is lim- share some ﬂeeting similarities we believe their end goal
+itedtothetransferofdigitalassets(“speciﬁcallyaboutto- is substantially diﬀerent and that rather than competing,
+kens”)ratherthanarbitraryinformation,howeversuchin- thetwoprotocolsarelikelytoultimatelyco-existundera
+terchaincommunicationdoeshaveareturnpathfordata, mutuallybeneﬁcialrelationshipfortheforeseeablefuture.
+e.g. to report to the sender on the status of the transfer.
+Validator sets for the zoned chains, and in particular
+3. Summary
+the means of incentivising them, are, like side-chains, left
+as an unsolved problem. The general assumption is that Polkadot is a scalable heterogeneous multi-chain. This
+eachzonedchainwillitselfholdatokenofvaluewhosein- means that unlike previous blockchain implementations
+ﬂationisusedtopayforvalidators. Stillintheearlystages whichhavefocusedonprovidingasinglechainofvarying
+ofdesign,atpresenttheproposallackscomprehensivede- degreesofgeneralityoverpotentialapplications,Polkadot
+tails over the economic means of achieving the scalable itself is designed to provide no inherent application func-
+certainty over global validity. However, the loose coher- tionality at all. Rather, Polkadot provides the bedrock
+ence required between the zones and the hub will allow “relay-chain” upon which a large number of validatable,
+for additional ﬂexibility over the parameters of the zoned globally-coherentdynamicdata-structuresmaybehosted
+chains compared to that of a system enforcing stronger side-by-side. We call these data-structures “parallelised”
+coherence. chains or parachains, though there is no speciﬁc need for
+them to be blockchain in nature.
+In other words, Polkadot may be considered equiva-
+2.2.3. Casper. As yet no comprehensive review or side-
+lenttoasetofindependentchains(e.g.thesetcontaining
+by-side comparison between Casper [6] and Polkadot
+Ethereum, Ethereum Classic, Namecoin and Bitcoin) ex-
+have been made, though one can make a fairly sweeping
+cept for two very important points:
+(and accordingly inaccurate) characterisation of the two.
+• Pooled security;
+CasperisareimaginingofhowaPoSconsensusalgorithm
+• trust-free interchain transactability.
+couldbebasedaroundparticipantsbettingonwhichfork
+wouldultimatelybecomecanonical. Substantialconsider- ThesepointsarewhyweconsiderPolkadottobe“scal-
+ation was given to ensuring that it be robust to network able”. In principle, a problem to be deployed on Polka-
+forks,evenwhenprolonged,andhavesomeadditionalde- dot may be substantially parallelised—scaled out—over
+greeofscalabilityontopofthebasicEthereummodel. As a large number of parachains. Since all aspects of each
+such,Caspertodatehastendedtobeasubstantiallymore parachainmaybeconductedinparallelbyadiﬀerentseg-
+complex protocol than Polkadot and its forebears, and a mentofthePolkadotnetwork,thesystemhassomeability
+substantialdeviationfromthebasicblockchainformat. It to scale. Polkadot provides a rather bare-bones piece of
+3asopposedtoaone-waypegwhichisessentiallytheactionofdestroyingtokensinonechaintocreatetokensinanotherwithoutthe
+mechanismtodotheconverseinordertorecovertheoriginaltokens
+POLKADOT: VISION FOR A HETEROGENEOUS MULTI-CHAIN FRAMEWORK DRAFT 1 4
+infrastructure leaving much of the complexity to be ad- oﬄoaded into middleware, placed through a
+dressed at the middleware level. This is a conscious de- parachain or introduced in a later optimisation.
+cision intended to reduce development risk, enabling the General: no unnecessary requirement, constraint
+requisitesoftwaretobedevelopedwithinashorttimespan or limitation should be placed on parachains;
+and with a good level of conﬁdence over its security and Polkadot should be a test bed for consensus sys-
+robustness. temdevelopmentwhichcanbeoptimisedthrough
+makingthemodelintowhichextensionsﬁtasab-
+stract as possible.
+3.1. The Philosophy of Polkadot. Polkadot should Robust: Polkadot should provide a fundamentally
+provide an absolute rock-solid foundation on which to stablebase-layer. Inadditiontoeconomicsound-
+build the next wave of consensus systems, right through ness, this also means decentralising to minimise
+theriskspectrumfromproduction-capablematuredesigns the vectors for high-reward attacks.
+to nascent ideas. By providing strong guarantees over se-
+curity, isolation and communication, Polkadot can allow 4. Participation in Polkadot
+parachainstoselectfromarangeofpropertiesthemselves.
+TherearefourbasicrolesintheupkeepofanPolkadot
+Indeed,weforeseevariousexperimentalblockchainspush-
+network: collator,ﬁsherman,nominatorandvalidator. In
+ing the properties of what could be considered sensible
+one possible implementation of Polkadot, the latter role
+today.
+mayactuallybebrokendownintotworoles: basicvalida-
+We see conservative, high-value chains similar to
+tor and availability guarantor; this is discussed in section
+Bitcoin or Z-cash [20] co-existing alongside lower-value
+6.5.3.
+“theme-chains” (such marketing, so fun) and test-nets
+with zero or near-zero fees. We see fully-encrypted,
+“dark”,consortiumchainsoperatingalongside—andeven Collator Fisherman Nominator
+providing services to—highly functional and open chains
+such as those like Ethereum. We see experimental new provides block
+VM-basedchainssuchasasubjectivetime-chargedwasm candidates
+reports
+for
+chain being used as a means of outsourcing diﬃcult com- monitors bad approves
+pute problems from a more mature Ethereum-like chain behaviour to
+or a more restricted Bitcoin-like chain.
+To manage chain upgrades, Polkadot will inherently
+support some sort of governance structure, likely based Validators Validators
+(this group) becomes (other groups)
+on existing stable political systems and having a bicam-
+eral aspect similar to the Yellow Paper Council [24]. As
+theultimateauthority,theunderlyingstakabletokenhold- Figure 1. Theinteractionbetweenthe
+erswouldhave“referendum”control. Toreﬂecttheusers’ four roles of Polkadot.
+need for development but the developers’ need for legiti-
+macy, we expect a reasonable direction would be to form
+4.1. Validators. A validator is the highest charge and
+the two chambers from a “user” committee (made up of
+helps seal new blocks on the Polkadot network. The val-
+bondedvalidators)anda“technical”committeemadeup
+idator’s role is contingent upon a suﬃciently high bond
+of major client developers and ecosystem players. The
+beingdeposited,thoughweallowotherbondedpartiesto
+body of token holders would maintain the ultimate legit-
+nominate one or more validators to act for them and as
+imacy and form a supermajority to augment, reparam-
+such some portion of the validator’s bond may not neces-
+eterise, replace or dissolve this structure, something we
+sarilybeownedbythevalidatoritselfbutratherbythese
+don’t doubt the eventual need for: in the words of Twain
+nominators.
+“Governmentsanddiapersmustbechangedoften,andfor
+A validator must run a relay-chain client implementa-
+the same reason”.
+tion with high availability and bandwidth. At each block
+Whereas reparameterisation is typically trivial to ar-
+the node must be ready to accept the role of ratifying
+rangewithinalargerconsensusmechanism,morequalita-
+a new block on a nominated parachain. This process
+tivechangessuchasreplacementandaugmentationwould
+involves receiving, validating and republishing candidate
+likelyneedtobeeithernon-automated“soft-decrees”(e.g.
+blocks. The nomination is deterministic but virtually un-
+through the canonicalisation of a block number and the
+predictable much in advance. Since the validator cannot
+hashofadocumentformallyspecifyingthenewprotocol)
+reasonably be expected to maintain a fully-synchronised
+or necessitate the core consensus mechanism to contain a
+database of all parachains, it is expected that the valida-
+suﬃciently rich language to describe any aspect of itself
+tor will nominate the task of devising a suggested new
+whichmayneedtochange. Thelatterisaneventualaim,
+parachain block to a third-party, known as a collator.
+however, the former more likely to be chosen in order to
+Onceallnewparachainblockshavebeenproperlyrat-
+facilitate a reasonable development timeline.
+iﬁed by their appointed validator subgroups, validators
+Polkadot’s primary tenets and the rules within which
+mustthenratifytherelay-chainblockitself. Thisinvolves
+we evaluate all design decisions are:
+updating the state of the transaction queues (essentially
+Minimal: Polkadotshouldhaveaslittlefunctional- moving data from a parachain’s output queue to another
+ity as possible. parachain’s input queue), processing the transactions of
+Simple: noadditionalcomplexityshouldbepresent the ratiﬁed relay-chain transaction set and ratifying the
+in the base protocol than can reasonably be ﬁnal block, including the ﬁnal parachain changes.
+POLKADOT: VISION FOR A HETEROGENEOUS MULTI-CHAIN FRAMEWORK DRAFT 1 5
+A validator not fulﬁlling their duty to ﬁnd consensus the existence of ﬁshermen, we expect events of misbe-
+undertherulesofourchosenconsensusalgorithmispun- haviourtohappenseldom, andwhentheydoonlydueto
+ished. For initial, unintentional failures, this is through the bonded party being careless with secret key security,
+withholding the validator’s reward. Repeated failures re- rather than through malicious intent. The name comes
+sultinthereductionoftheirsecuritybond(throughburn- from the expected frequency of reward, the minimal re-
+ing). Provablymaliciousactionssuchasdouble-signingor quirements to take part and the eventual reward size.
+conspiringtoprovideaninvalidblockresultinthelossof Fishermengettheirrewardthroughatimelyproofthat
+theentirebond(whichispartiallyburntbutmostlygiven at least one bonded party acted illegally. Illegal actions
+to the informant and the honest actors). includesigningtwoblockseachwiththesameratiﬁedpar-
+Insomesense,validatorsaresimilartotheminingpools ent or, in the case of parachains, helping ratify an invalid
+of current PoW blockchains. block. To prevent over-rewarding or the compromise and
+illicit use of a session’s secret key, the base reward for
+4.2. Nominators. A nominator is a stake-holding party providing a single validator’s illegally signed message is
+whocontributestothesecuritybondofavalidator. They minimal. This reward increases asymptotically as more
+havenoadditionalroleexcepttoplaceriskcapitalandas corroborating illegal signatures from other validators are
+such to signal that they trust a particular validator (or providedimplyingagenuineattack. Theasymptoteisset
+setthereof)toactresponsiblyintheirmaintenanceofthe at 66% following our base security assertion that at least
+network. They receive a pro-rata increase or reduction two-thirds of the validators act benevolently.
+in their deposit according to the bond’s growth to which Fishermen are somewhat similar to “full nodes” in
+they contribute. present-dayblockchainsystemsthattheresourcesneeded
+Together with collators, next, nominators are in some arerelativelysmallandthecommitmentofstableuptime
+sense similar to the miners of the present-day PoW net- and bandwidth is not necessary. Fishermen diﬀer in so
+works. muchastheymustpostasmallbond. Thisbondprevents
+sybil attacks from wasting validators’ time and compute
+resources. It is immediately withdrawable, probably no
+4.3. Collators. Transactioncollators(collatorsforshort)
+more than the equivalent of a few dollars and may lead
+are parties who assist validators in producing valid
+to reaping a hefty reward from spotting a misbehaving
+parachain blocks. They maintain a “full-node” for a par-
+validator.
+ticular parachain; meaning that they retain all necessary
+information to be able to author new blocks and execute
+5. Design Overview
+transactions in much the same way as miners do on cur-
+rentPoWblockchains. Undernormalcircumstances,they This section is intended to give a brief overview of the
+willcollateandexecutetransactionstocreateanunsealed system as a whole. A more thorough exploration of the
+block, and provide it, together with a zero-knowledge system is given in the section following it.
+proof, to one or more validators presently responsible for
+5.1. Consensus. On the relay-chain, Polkadot achieves
+proposing a parachain block.
+low-level consensus over a set of mutually agreed valid
+The precise nature of the relationship between colla-
+blocks through a modern asynchronous Byzantine fault-
+tors, nominators and validators will likely change over
+tolerant(BFT)algorithm. Thealgorithmwillbeinspired
+time. Initially, we expect collators to work very closely
+bythesimpleTendermint[11]andthesubstantiallymore
+with validators, since there will be only a few (perhaps
+involved HoneyBadgerBFT [14]. The latter provides an
+onlyone)parachain(s)withlittletransactionvolume. The
+eﬃcient and fault-tolerant consensus over an arbitrarily
+initialclientimplementationwillincludeRPCstoallowa
+defectivenetworkinfrastructure,givenasetofmostlybe-
+parachaincollatornodetounconditionallysupplya(relay-
+nign authorities or validators.
+chain) validator node with a provably valid parachain
+Foraproof-of-authority(PoA)stylenetwork,thisalone
+block. As the cost of maintaining a synced version of
+would be suﬃcient, however Polkadot is imagined to be
+all such parachains increases, we expect to see additional
+also deployable as a network in a fully open and public
+infrastructure in place which will help separate out the
+situation without any particular organisation or trusted
+duties to independent, economically-motivated, parties.
+authority required to maintain it. As such we need a
+Eventually, we expect to see collator pools who vie to
+meansofdeterminingasetofvalidatorsandincentivising
+collect the most transaction fees. Such collators may be-
+themtobehonest. ForthisweutilisePoSbasedselection
+come contracted to serve particular validators over a pe-
+criteria.
+riodoftimeforanon-goingshareintherewardproceeds.
+Alternatively, “freelance” collators may simply create a 5.2. Proving the Stake. We assume that the network
+marketoﬀeringvalidparachainblocksinreturnforacom- will have some means of measuring how much “stake”
+petitive share of the reward payable immediately. Simi- any particular account has. For ease of comparison to
+larly, decentralised nominator pools would allow multiple pre-existingsystems,wewillcalltheunitofmeasurement
+bondedparticipantstocoordinateandsharethedutyofa “tokens”. Unfortunately the term is less than ideal for a
+validator. This ability to pool ensures open participation number of reasons, not least that being simply a scalar
+leading to a more decentralised system. value associated with an account, there is no notion of
+individuality.
+4.4. Fishermen. Unlike the other two active parties, Weimaginevalidatorsbeelected,infrequently(atmost
+ﬁshermen are not directly related to the block-authoring onceperdaybutperhapsasseldomasonceperquarter),
+process. Rather they are independent “bounty hunters” through a Nominated Proof-of-Stake (NPoS) scheme. In-
+motivated by a large one-oﬀ reward. Precisely due to centivisation can happen through a pro-rata allocation of
+POLKADOT: VISION FOR A HETEROGENEOUS MULTI-CHAIN FRAMEWORK DRAFT 1 6
+Transaction
+(submitted by
+external actor)
+Propagated transactions
+Collator
+Block candidate submission
+Propagated block
+Validator swarm
+Fisherman (each coloured by its 2nd order
+designated parachain) Relay-chain
+Parachain community
+Account
+Inbound transaction
+Interchain transactions
+(managed by validators) Relay
+chain
+Outbound transaction
+Parachain Parachain
+queues and I/O
+Parachain
+bridge
+Virtual parachain
+(e.g. Ethereum)
+Figure 2. A summary schematic of the Polkadot system. This shows collators collecting and propa-
+gating user-transactions, as well as propagating block candidates to ﬁshermen and validators. It also
+shows how an account can post a transaction which is carried out of its parachain, via the relay-chain
+and on into another parachain where it can be interpreted as a transaction to an account there.
+funds coming from a token base expansion (up to 100% Long-range “nothing-at-stake” attacks4 are circum-
+per year, though more likely around 10%) together with vented through a simple “checkpoint” latch which pre-
+any transaction fees collected. While monetary base ex- vents a dangerous chain-reorganisation of more than a
+pansiontypicallyleadstoinﬂation,sincealltokenowners particular chain-depth. To ensure newly-syncing clients
+would have a fair opportunity at participation, no token- are not able to be fooled onto the wrong chain, regular
+holder would need to suﬀer a reduction in value of their “hardforks”willoccur(ofatmostthesameperiodofthe
+holdings over time provided they were happy to take a validators’bondliquidation)thathard-coderecentcheck-
+roleintheconsensusmechanism. Aparticularproportion pointblockhashesintoclients. Thisplayswellwithafur-
+of tokens would be targeted for the staking process; the therfootprint-reducingmeasureof“ﬁnitechainlength”or
+eﬀectivetokenbaseexpansionwouldbeadjustedthrough periodic reseting of the genesis-block.
+a market-based mechanism to reach this target.
+Validators are bonded heavily by their stakes; exiting 5.3. Parachains and Collators. Each parachain gets
+validators’ bonds remain in place long after the valida- similar security aﬀordances to the relay-chain: the
+tors’ duties cease (perhaps around 3 months). This long parachains’headersaresealedwithintherelay-chainblock
+bond-liquidation period allows future misbehaviour to be ensuringnoreorganisation,or“double-spending”,ispossi-
+punishedupuntiltheperiodiccheckpointingofthechain. blefollowingconﬁrmation. Thisisasimilarsecurityguar-
+Misbehaviour results in punishment, such as reduction of antee to that oﬀered by Bitcoin’s side-chains and merge-
+reward or, in cases which intentionally compromise the mining. Polkadot, however, also provides strong guaran-
+network’s integrity, the validator losing some or all of its tees that the parachains’ state transitions are valid. This
+stake to other validators, informants or the stakeholders happens through the set of validators being cryptograph-
+as a whole (through burning). For example, a validator ically randomly segmented into subsets; one subset per
+whoattemptstoratifybothbranchesofafork(sometimes parachain,thesubsetspotentiallydiﬀeringperblock. This
+known as a “short-range” attack) may be identiﬁed and setup generally implies that parachains’ block times will
+punished in the latter way. beatleastaslongasthatoftherelay-chain. Thespeciﬁc
+meansofdeterminingthepartitioningisoutsidethescope
+4Suchanattackiswheretheadversaryforgesanentirelynewchainofhistoryfromthegenesisblockonwards. Throughcontrollinga
+relativelyinsigniﬁcantportionofstakeattheoﬀset,theyareabletoincrementallyincreasetheirportionofthestakerelativetoallother
+stakeholdersastheyaretheonlyactiveparticipantsintheiralternativehistory. Sincenointrinsicphysicallimitationexistsonthecreation
+ofblocks(unlikePoWwherequiterealcomputationalenergymustbespent),theyareabletocraftachainlongerthantherealchainina
+relativelyshorttimespanandpotentiallymakeitthelongestandbest,takingoverthecanonicalstateofthenetwork.
+POLKADOT: VISION FOR A HETEROGENEOUS MULTI-CHAIN FRAMEWORK DRAFT 1 7
+of this document but would likely be based either around
+Account sends post:  Account receives post: 
+acommit-revealframeworksimilartotheRanDAO [19]or entry placed in entry removed from
+usedatacombinedfrompreviousblocksofeachparachain  egress Merkle tree ingress Merkle tree
+under a cryptographically secure hash.     for destination
+          parachain
+Such subsets of validators are required to provide a
+parachain block candidate which is guaranteed valid (on
+Source: shares Destination: gets
+pain of bond conﬁscation). Validity revolves around two data with next block’s egress data from prior
+importantpoints;ﬁrstlythatitisintrinsicallyvalid—that validators ingress block’s validators.
+all state transitions were executed faithfully and that all
+externaldatareferenced(i.e. transactions)isvalidforin-
+clusion. Secondly, that any data which is extrinsic to its
+proof-of-post stored in routed reference placed
+candidate, such as those external transactions, has suﬃ- parachain egress Merkle in destination parachain’s
+ciently high availability so that participants are able to tree ingress Merkle tree
+download it and execute the block manually.5 Valida-
+tors may provide only a “null” block containing no ex- Figure 3. A basic schematic showing
+ternal “transactions” data, but may run the risk of get- the main parts of routing for posted
+ting a reduced reward if they do. They work alongside transactions (”posts”).
+a parachain gossip protocol with collators—individuals
+who collate transactions into blocks and provide a non- To ensure minimal implementation complexity, min-
+interactive, zero-knowledge proof that the block consti- imal risk and minimal straight-jacketing of future
+tutesavalidchildofitsparent(andtakinganytransaction parachain architectures, these interchain transactions are
+fees for their trouble). eﬀectively indistinguishable from standard externally-
+It is left to parachain protocols to specify their own signed transactions. The transaction has an origin seg-
+means of spam-prevention: there is no fundamental no- ment, providing the ability to identify a parachain, and
+tion of “compute-resource metering” or “transaction fee” an address which may be of arbitrary size. Unlike com-
+imposed by the relay-chain. There is also no direct en- mon current systems such as Bitcoin and Ethereum, in-
+forcement on this by the relay-chain protocol (though it terchaintransactionsdonotcomewithanykindof“pay-
+is unlikely that the stakeholders would choose to adopt ment” of fee associated; any such payment must be man-
+a parachain which didn’t provide a decent mechanism). aged through negotiation logic on the source and desti-
+This is an explicit nod to the possibility of chains unlike nation parachains. A system such as that proposed for
+Ethereum,e.g.aBitcoin-likechainwhichhasamuchsim- Ethereum’s Serenity release [7] would be a simple means
+pler fee model or some other, yet-to-be-proposed spam- ofmanagingsuchacross-chainresourcepayment,though
+prevention model. we assume others may come to the fore in due course.
+Polkadot’s relay-chain itself will probably exist as an Interchain transactions are resolved using a simple
+Ethereum-likeaccountsandstatechain,possiblyanEVM- queuingmechanismbasedaroundaMerkletreetoensure
+derivative. Sincetherelay-chainnodeswillberequiredto ﬁdelity. It is the task of the relay-chain maintainers to
+do substantial other processing, transaction throughput move transactions on the output queue of one parachain
+will be minimised partly through large transaction fees into the input queue of the destination parachain. The
+and,shouldourresearchmodelsrequire,ablocksizelimit. passedtransactionsgetreferencedontherelay-chain,how-
+ever are not relay-chain transactions themselves. To pre-
+vent a parachain from spamming another parachain with
+transactions, for a transaction to be sent, it is required
+that the destination’s input queue be not too large at
+the time of the end of the previous block. If the input
+queue is too large after block processing, then it is con-
+sidered“saturated”andnotransactionsmayberoutedto
+it within subsequent blocks until reduced back below the
+limit. These queues are administered on the relay-chain
+allowing parachains to determine each other’s saturation
+status; this way a failed attempt to post a transaction
+5.4. Interchain Communication. Thecriticalﬁnalin-
+to a stalled destination may be reported synchronously.
+gredient of Polkadot is interchain communication. Since
+(Thoughsincenoreturnpathexists,ifasecondarytrans-
+parachainscanhavesomesortofinformationchannelbe-
+actionfailedforthatreason,itcouldnotbereportedback
+tween them, we allow ourselves to consider Polkadot a
+to the original caller and some other means of recovery
+scalablemulti-chain. InthecaseofPolkadot,thecommu-
+would have to take place.)
+nicationisassimpleascanbe: transactionsexecutingina
+parachainare(accordingtothelogicofthatchain)ableto 5.5. PolkadotandEthereum. DuetoEthereum’sTur-
+eﬀectthedispatchofatransactionintoasecondparachain ing completeness, we expect there is ample opportu-
+or,potentially,therelay-chain. Likeexternaltransactions nity for Polkadot and Ethereum to be interoperable with
+on production blockchains, they are fully asynchronous each other, at least within some easily deducible secu-
+and there is no intrinsic ability for them to return any rity bounds. In short, we envision that transactions from
+kind of information back to its origin. Polkadot can be signed by validators and then fed into
+5Such a task might be shared between validators or could become the designate task of a set of heavily bonded validators known as
+availabilityguarantors.
+POLKADOT: VISION FOR A HETEROGENEOUS MULTI-CHAIN FRAMEWORK DRAFT 1 8
+Ethereum where they can be interpreted and enacted by In this model, Polkadot’s validator nodes would have
+a transaction-forwarding contract. In the other direction, to do little other than sign messages. To get the trans-
+we foresee the usage of specially formatted logs (events) actions actually routed onto the Ethereum network, we
+coming from a “break-out contract” to allow a swift veri- assume either validators themselves would also reside on
+ﬁcation that a particular message should be forwarded. theEthereumnetworkor,morelikely,thatsmallbounties
+be oﬀered to the ﬁrst actor who forwards the message on
+5.5.1. Polkadot to Ethereum. Through the choice of a
+to the network (the bounty could trivially be paid to the
+BFTconsensusmechanismwithvalidatorsformedfroma
+transaction originator).
+setofstakeholdersdeterminedthroughanapprovalvoting
+mechanism,weareabletogetasecureconsensuswithan 5.5.2. Ethereum to Polkadot. Getting transactions to be
+infrequently changing and modest number of validators. forwardedfromEthereumtoPolkadotusesthesimpleno-
+Inasystemwithatotalof144validators,ablocktimeof tion of logs. When an Ethereum contract wishes to dis-
+4 seconds and a 900-block ﬁnality (allowing for malicious patchatransactiontoaparticularparachainofPolkadot,
+behaviour such as double-votes to be reported, punished it need simply call into a special “break-out contract”.
+and repaired), the validity of a block can reasonably be Thebreak-outcontractwouldtakeanypaymentthatmay
+considered proven through as little as 97 signatures (two- be required and issue a logging instruction so that its ex-
+thirdsof144plusone)andafollowing60-minuteveriﬁca- istencemaybeproventhroughaMerkleproofandanas-
+tion period where no challenges are deposited. sertionthatthecorrespondingblock’sheaderisvalidand
+Ethereum is able to host a “break-in contract” which canonical.
+can maintain the 144 signatories and be controlled by Of the latter two conditions, validity is perhaps the
+them. Since elliptic curve digital signature (ECDSA) re- most straightforward to prove. In principle, the only re-
+covery takes only 3,000 gas under the EVM, and since quirement is for each Polkadot node needing the proof
+we would likely only want the validation to happen on a (i.e.appointedvalidatornodes)toberunningafullysyn-
+super-majority of validators (rather than full unanimity), chronised instance of a standard Ethereum node. Unfor-
+the base cost of Ethereum conﬁrming that an instruction tunately,thisisitselfaratherheavydependency. Amore
+was properly validated as coming from the Polkadot net- lightweightmethodwouldbetouseasimpleproofthatthe
+work would be no more than 300,000 gas—a mere 6% of headerwasevaluatedcorrectlythroughsupplyingonlythe
+the total block gas limit at 5.5M. Increasing the num- part of Ethereum’s state trie needed to properly execute
+ber of validators (as would be necessary for dealing with thetransactionsintheblockandcheckthatthelogs(con-
+dozens of chains) inevitably increases this cost, however tained in the block receipt) are valid. Such “SPV-like”6
+it is broadly expected for Ethereum’s transaction band- proofs may yet require a substantial amount of informa-
+width to grow over time as the technology matures and tion; conveniently, they would typically not be needed at
+infrastructure improves. Together with the fact that not all: a bond system inside Polkadot would allow bonded
+all validators need to be involved (e.g. only the highest third-parties to submit headers at the risk of losing their
+staked validators maybe called upon for sucha task) the bond should some other third-party (such as a “ﬁsher-
+limits of this mechanism extend reasonably well. man”,see6.2.3)provideaproofthattheheaderisinvalid
+Assuming a daily rotation of such validators (which is (speciﬁcally that the state root or receipt roots were im-
+fairly conservative—weekly or even monthly may be ac- postors).
+ceptable), then the cost to the network of maintaining On a non-ﬁnalising PoW network like Ethereum, the
+thisEthereum-forwardingbridgewouldbearound540,000 canonicality is impossible to proof conclusively. To ad-
+gas per day or, at present gas prices, $45 per year. A ba- dress this, applications that attempt to rely on any kind
+sictransactionforwardedaloneoverthebridgewouldcost ofchain-dependentcause-eﬀectwaitforanumberof“con-
+around$0.11;additionalcontractcomputationwouldcost ﬁrmations”,oruntilthedependenttransactionisatsome
+more, of course. By buﬀering and bundling transactions particular depth within the chain. On Ethereum, this
+together, the break-in authorisation costs can easily be depth varies from 1 block for the least valuable transac-
+shared, reducing the cost per transaction substantially; tionswithnoknownnetworkissuesto1200blocksaswas
+if 20 transactions were required before forwarding, then the case during the initial Frontier release for exchanges.
+the cost for forwarding a basic transaction would fall to On the stable “Homestead” network, this ﬁgure sits at
+around $0.01. 120 blocks for most exchanges, and we would likely take
+Oneinteresting,andcheaper,alternativetothismulti- a similar parameter.
+signature contract model would be to use threshold sig- So we can imagine our Polkadot-side Ethereum-
+naturesinordertoachievethemulti-lateralownershipse- interface to have some simple functions: to be able to
+mantics. While threshold signature schemes for ECDSA acceptanewheaderfromtheEthereumnetworkandval-
+are computationally expensive, those for other schemes idate the PoW, to be able to accept some proof that a
+suchasSchnorrsignaturesareveryreasonable. Ethereum particular log was emitted by the Ethereum-side break-
+plans to introduce primitives which would make such out contract for a header of suﬃcient depth (and forward
+schemes cheap to use in the upcoming Metropolis hard- the corresponding message within Polkadot) and ﬁnally
+fork. Ifsuchameanswereabletobeutilised,thegascosts tobeabletoacceptproofsthatapreviouslyacceptedbut
+for forwarding a Polkadot transaction into the Ethereum not-yet-enacted header contains an invalid receipt root.
+network would be dramatically reduced to a near zero To actually get the Ethereum header data itself (and
+overheadoverandabovethebasiccostsforvalidatingthe any SPV proofs or validity/canonicality refutations) into
+signature and executing the underlying transaction. the Polkadot network, an incentivisation for forwarding
+6SPVreferstoSimpliﬁedPaymentVeriﬁcationinBitcoinanddescribesamethodforclientstoverifytransactionswhilekeepingonly
+acopyofallblocksheadersofthelongestPoWchain.
+POLKADOT: VISION FOR A HETEROGENEOUS MULTI-CHAIN FRAMEWORK DRAFT 1 9
+data is needed. This could be as simple as a payment betweenthetwonetworks,thoughnonethelessasubstan-
+(funded from fees collected on the Ethereum side) paid tial eﬀort with an uncertain timeline and quite possibly
+to anyone able to forward a useful block whose header is requiring the cooperation of the stakeholders within that
+valid. Validators would be called upon to retain informa- network.
+tion relating to the last few thousand blocks in order to
+be able to manage forks, either through some protocol-
+6. Protocol in Depth
+intrinsic means or through a contract maintained on the
+relay chain. The protocol can be roughly broken down into three
+parts: the consensus mechanism, the parachain interface
+5.6. Polkadot and Bitcoin. Bitcoin interoperation and interchain transaction routing.
+presentsaninterestingchallengeforPolkadot: aso-called
+“two-way peg” would be a useful piece of infrastructure
+6.1. Relay-chain Operation. The relay-chain will
+to have on the side of both networks. However, due to
+likely be a chain broadly similar to Ethereum in that it
+thelimitationsofBitcoin,providingsuchapegsecurelyis
+is state-based with the state mapping address to account
+a non-trivial undertaking. Delivering a transaction from
+information, mainly balances and (to prevent replays) a
+Bitcoin to Polkadot can in principle be done with a pro-
+transactioncounter. Placingaccountsherefulﬁlsonepur-
+cess similar to that for Ethereum; a “break-out address”
+pose: to provide accounting for which identity possesses
+controlled in some way by the Polkadot validators could what amount of stake in the system.7 There will be no-
+receivetransferredtokens(anddatasentalongsidethem).
+table diﬀerences, though:
+SPVproofscouldbeprovidedbyincentivisedoraclesand,
+• Contracts cannot be deployed through transac-
+together with a conﬁrmation period, a bounty given for
+tions; following from the desire to avoid applica-
+identifying non-canonical blocks implying the transaction
+tion functionality on the relay-chain, it will not
+has been “double-spent”. Any tokens then owned in the
+support public deployment of contracts.
+“break-out address” would then, in principle, be con-
+• Computeresourceusage(“gas”)isnotaccounted;
+trolled by those same validators for later dispersal.
+sincetheonlyfunctionsavailableforpublicusage
+The problem however is how the deposits can be se-
+willbeﬁxed,therationalebehindgasaccounting
+curely controlled from a rotating validator set. Unlike
+no longer holds. As such, a ﬂat fee will apply in
+Ethereumwhichisabletomakearbitrarydecisionsbased
+allcases,allowingformoreperformancefromany
+upon combinations of signatures, Bitcoin is substantially
+dynamiccodeexecutionthatmayneedtobedone
+more limited, with most clients accepting only multi-
+and a simpler transaction format.
+signature transactions with a maximum of 3 parties. Ex-
+• Special functionality is supported for listed con-
+tending this to 36, or indeed thousands as might ulti-
+tractsthatallowsforauto-executionandnetwork-
+mately be desired, is impossible under the current proto-
+message outputs.
+col. One option is to alter the Bitcoin protocol to enable
+such functionality, however so-called “hard forks” in the In the event that the relay-chain has a VM and it be
+Bitcoinworldarediﬃculttoarrangejudgingbyrecentat- based around the EVM, it would have a number of mod-
+tempts. Onepossibilityistheuseofthresholdsignatures, iﬁcations to ensure maximal simplicity. It would likely
+cryptographicschemestoallowasinglyidentiﬁablepublic have a number of built-in contracts (similar to those at
+keytobeeﬀectivelycontrolledbymultiplesecret“parts”, addresses 1-4 in Ethereum) to allow for platform-speciﬁc
+someorallofwhichmustbeutilisedtocreateavalidsig- duties to be managed including a consensus contract, a
+nature. Unfortunately, threshold signatures compatible validator contract and a parachain contract.
+with Bitcoin’s ECDSA are computationally expensive to IfnottheEVM,thenaWebAssembly[2](wasm)back-
+createandofpolynomialcomplexity. Otherschemessuch end is the most likely alternative; in this case the overall
+a Schnorr signatures provide far lower costs, however the structure would be similar, but there would be no need
+timelineonwhichtheymaybeintroducedintotheBitcoin forthebuilt-incontractswithWasmbeingaviabletarget
+protocol is uncertain. for general purpose languages rather than the immature
+Since the ultimate security of the deposits rests with and limited languages for the EVM.
+a number of bonded validators, one other option is to OtherlikelydeviationsfromthepresentEthereumpro-
+reduce the multi-signature key-holders to only a heavily tocolarequitepossible,forexampleasimpliﬁcationofthe
+bonded subset of the total validators such that threshold transaction-receiptformatallowingfortheparallelexecu-
+signatures become feasible (or, at worst, Bitcoin’s native tionofnon-conﬂictingtransactionswithinthesameblock,
+multi-signature is possible). This of course reduces the as proposed for the Serenity series of changes.
+total amount of bonds that could be deducted in repara- It is possible, though unlikely, that a Serenity-like
+tions should the validators behave illegally, however this “pure”chainbedeployedastherelay-chain,allowingfora
+isagracefuldegradation,simplysettinganupperlimitof particularcontracttomanagethingslikethestakingtoken
+the amount of funds that can securely run between the balances rather than making that a fundamental part of
+twonetworks(orindeed,onthe%lossesshouldanattack thechain’sprotocol. Atpresent,wefeelitisunlikelythis
+from the validators succeed). will oﬀer a suﬃciently great protocol simpliﬁcation to be
+Assuchwebelieveitnotunrealistictoplaceareason- worththeadditionalcomplexityanduncertaintyinvolved
+ably secure Bitcoin interoperability “virtual parachain” in developing it.
+7As ameans of representing theamount a given holderis responsiblefor the overall security of thesystem, thesestakeaccountswill
+inevitably encode some economic value. However, it should be understood that since there is no intention that such values be used in
+anywayforthepurposeofexchangingforreal-worldgoodsandservices,itshouldbeaccordinglynotedthatthetokensnotbelikenedto
+currencyandassuchtherelay-chainretainitsnihilisticphilosophyregardingapplications.
+POLKADOT: VISION FOR A HETEROGENEOUS MULTI-CHAIN FRAMEWORK DRAFT 1 10
+Thereareanumberofsmallpiecesoffunctionalityre- part. At the beginning of each session (sessions would
+quired for administrating the consensus mechanism, val- happen regularly, perhaps as often as once per hour) the
+idator set, validation mechanism and parachains. These validatorslots would be ﬁlled accordingto eachwould-be
+couldbeimplementedtogetherunderamonolithicproto- validator’sstakeandpayoutrate. Onepossiblealgorithm
+col. However, for reasons of auguring modularity, we de- forthiswouldbetotakethosewiththelowestoﬀerswho
+scribetheseas“contracts”oftherelay-chain. Thisshould represent a stake no higher than the total stake targeted
+be taken to mean that they are objects (in the sense of dividedbythenumberofslotsandnolowerthanalower-
+object-orientated programming) managed by the relay- bound of half that amount. If the slots cannot be ﬁlled,
+chain’s consensus mechanism, but not necessarily that thelowerboundcouldberepeatedlyreducedbysomefac-
+they are deﬁned as programs in EVM-like opcodes, nor tor in order to satisfy.
+even that they be individually addressable through the
+6.2.2. Nominating. It is possible to trustlessly nominate
+account-system.
+ones staking tokens to an active validator, giving them
+6.2. StakingContract. Thiscontractmaintainstheval- the responsibility of validators duties. Nominating works
+idator set. It manages: throughanapproval-votingsystem. Eachwould-benomi-
+• which accounts are currently validators; natorisabletopostaninstructiontothestakingcontract
+• which are available to become validators at short expressing one or more validator identities under whose
+notice; responsibility they are prepared to entrust their bond.
+• which accounts have placed stake nominating to Each session, nominators’ bonds are dispersed to be
+a validator; represented by one or more validators. The dispersal al-
+• properties of each including staking volume, ac- gorithmoptimisesforasetofvalidatorsofequivalenttotal
+ceptable payout-rates and addresses and short- bonds. Nominators’ bonds become under the eﬀective re-
+term (session) identities. sponsibility of the validator and gain interest or suﬀer a
+punishment-reduction accordingly.
+It allows an account to register a desire to become a
+bonded validator (along with its requirements), to nom- 6.2.3. Bond Conﬁscation/Burning. Certain validator be-
+inate to some identity, and for preexisting bonded val- haviour results in a punitive reduction of their bond. If
+idators to register their desire to exit this status. It also the bond is reduced below the allowable minimum, the
+includesthemachineryitselfforthevalidationandcanon- sessionisprematurelyendedandanotherstarted. Anon-
+icalisation mechanism. exhaustive list of punishable validator misbehaviour in-
+cludes:
+6.2.1. Stake-token Liquidity. It is generally desirable to
+haveasmuchofthetotalstakingtokensaspossibletobe • Beingpartofaparachaingroupunabletoprovide
+staked within the network maintenance operations since consensus over the validity of a parachain block;
+thisdirectlytiesthenetworksecuritytotheoverall“mar- • actively signing for the validity of an invalid
+ket capitalisation” of the staking token. This can easily parachain block;
+be incentivised through inﬂating the currency and hand- • inability to supply egress payloads previously
+ing out the proceeds to those who participate as valida- voted as available;
+tors. However, to do so presents a problem: if the token • inactivity during the consensus process;
+islockedintheStakingContractunderpunishmentofre- • validating relay-chain blocks on competing forks.
+duction,howcanasubstantialportionremainsuﬃciently Somecasesofmisbehaviourthreatenthenetwork’sin-
+liquid in order to allow price discovery? tegrity (such as signing invalid parachain blocks and val-
+One answer to this is allowing a straight-forward de- idating multiple sides of a fork) and as such result in ef-
+rivative contract, securing fungible tokens on an underly- fective exile through the total reduction of the bond. In
+ing staked token. This is diﬃcult to arrange in a trust- other, less serious cases (e.g. inactivity in the consensus
+free manner. Furthermore, these derivative tokens can- process) or cases where blame cannot be precisely allot-
+not be treated equally for the same reason that diﬀer- ted (being part of an ineﬀective group), a small portion
+ent Eurozone government’s bonds are not fungible: there of the bond may instead be ﬁned. In the latter case, this
+is a chance of the underlying asset failing and becoming workswellwithsub-groupchurntoensurethatmalicious
+worthless. With Eurozone governments, there could be a nodes suﬀer substantially more loss than the collaterally-
+default. With validator-staked tokens, the validator may damaged benevolent nodes.
+act maliciously and be punished. In some cases (e.g. multi-fork validation and invalid
+Keeping with our tenets, we elect for the simplest so- sub-blocksigning)validatorscannotthemselveseasilyde-
+lution: not all tokens be staked. This would mean that tect each others’ misbehaviour since constant veriﬁcation
+some proportion (perhaps 20%) of tokens will forcibly re- ofeachparachainblockwouldbetooarduousatask. Here
+mainliquid. Thoughthisisimperfectfromasecurityper- it is necessary to enlist the support of parties external to
+spective,itisunlikelytomakeafundamentaldiﬀerencein the validation process to verify and report such misbe-
+thesecurityofthenetwork; 80%ofthereparationspossi- haviour. The parties get a reward for reporting such ac-
+blefrombond-conﬁscationswouldstillbeabletobemade tivity;theirterm,“ﬁshermen”stemsfromtheunlikeliness
+compared to the “perfect case” of 100% staking. of such a reward.
+Theratiobetweenstakedandliquidtokenscanbetar- Since these cases are typically very serious, we envi-
+geted fairly simply through a reverse auction mechanism. sion that any rewards can easily be paid from the con-
+Essentially, token holders interested in being a validator ﬁscated bond. In general we prefer to balance burning
+would each post an oﬀer to the staking contract stating (i.e. reduction to nothing) with reallocation, rather than
+theminimumpayout-ratethattheywouldrequiretotake attempting wholesale reallocation. This has the eﬀect of
+POLKADOT: VISION FOR A HETEROGENEOUS MULTI-CHAIN FRAMEWORK DRAFT 1 11
+increasingtheoverallvalueofthetoken,compensatingthe happen, however it is designed to be a safeguard least
+networkingeneraltosomedegreeratherthanthespeciﬁc there be some intractable problem in a parachain’s vali-
+party involved in discovery. This is mainly as a safety dationsystem. Themostobviousinstancewhereitmight
+mechanism: the large amounts involved could lead to ex- be needed is a consensus-critical diﬀerence between im-
+treme and acute behaviour incentivisation were they all plementationsleadingvalidatorstobeunabletoagreeon
+bestowed on a single target. validityorblocks. Validatorswouldbeencouragedtouse
+In general, it is important that the reward is suﬃ- multipleclientimplementationsinorderthattheyareable
+ciently large to make veriﬁcation worthwhile for the net- to spot such a problem prior to bond conﬁscation.
+work, yet not so large as to oﬀset the costs of fronting a Sincesuspensionisanemergencymeasure,itwouldbe
+well-ﬁnanced,well-orchestrated”industrial-level”criminal undertheauspicesofthedynamicvalidator-votingrather
+hacking attack on some unlucky validator to force misbe- than a referendum. Re-instating would be possible both
+haviour. from the validators or a referendum.
+Inthisway,theamountclaimedshouldgenerallybeno Theremovalofparachainsaltogetherwouldcomeonly
+greaterthanthedirectbondoftheerrantvalidator,lesta after a referendum and with which would be required a
+perverseincentiveariseofmisbehavingandreportingone- substantial grace period to allow an orderly transition to
+selfforthebounty. Thiscanbecombatedeitherexplicitly eitherastandalonechainortobecomepartofsomeother
+through a minimum direct bond requirement for being a consensus-system. The grace period would likely be of
+validator or implicitly by educating nominators that val- the order of months and is likely to be set out on a per-
+idatorswithlittlebondsdepositedhavenogreatincentive chainbasisintheparachainregistryinorderthatdiﬀerent
+to behave well. parachains can enjoy diﬀerent grace periods according to
+their need.
+6.3. Parachain Registry. Each parachain is deﬁned in
+this registry. It is a relatively simple database-like con-
+struct and holds both static and dynamic information on 6.4. Sealing Relay Blocks. Sealing refers, in essence,
+each chain. to the process of canonicalisation; that is, a basic data
+Static information includes the chain index (a simple transform which maps the original into something funda-
+integer), along with the validation protocol identity, a mentally singular and meaningful. Under a PoW chain,
+means of distinguishing between the diﬀerent classes of sealing is eﬀectively a synonym for mining. In our case,
+parachain so that the correct validation algorithm can be it involves the collection of signed statements from val-
+runbyvalidatorsconsignedtoputtingforwardavalidcan- idatorsoverthevalidity,availabilityandcanonicalityofa
+didate. Aninitialproof-of-conceptwouldfocusonplacing particularrelay-chainblockandtheparachainblocksthat
+the new validation algorithms into clients themselves, ef- it represents.
+fectivelyrequiringahardforkoftheprotocoleachtimean The mechanics of the underlying BFT consensus al-
+additional class of chain were added. Ultimately, though, gorithm is out of scope for the present work. We will
+it may be possible to specify the validation algorithm in instead describe it using a primitive which assumes a
+a way both rigorous and eﬃcient enough that clients are consensus-creating state-machine. Ultimately we expect
+able to eﬀectively work with new parachains without a to be inspired by a number of promising BFT consensus
+hard-fork. Onepossibleavenuetothiswouldbetospecify algorithms in the core; Tangaora [9] (a BFT variant of
+the parachain validation algorithm in a well-established, Raft [16]), Tendermint [11] and HoneyBadgerBFT [14].
+natively-compiled,platform-neutrallanguagesuchasWe- The algorithm will have to reach an agreement on mul-
+bAssembly. Additionalresearchisnecessarytodetermine tiple parachains in parallel, thus diﬀering from the usual
+whetherthisistrulyfeasible,howeverifso,itcouldbring blockchain consensus mechanisms. We assume that once
+withitthetremendousadvantageofbanishinghard-forks consensus is reached, we are able to record the consensus
+for good. in an irrefutable proof which can be provided by any of
+Dynamic information includes aspects of the transac- the participants to it. We also assume that misbehaviour
+tionroutingsystemthatmusthaveglobalagreementsuch within the protocol can be generally reduced to a small
+astheparachain’singressqueue(describedinsection6.6). group containing misbehaving participants to minimise
+The registry is able to have parachains added only the collateral damage when dealing out punishment.8
+through full referendum voting; this could be managed The proof, which takes the form of our signed state-
+internally but would more likely be placed in an external ments,isplacedintherelay-chainblock’sheadertogether
+referendum contract in order to facilitate re-usage under with certain other ﬁelds not least the relay-chain’s state-
+moregeneralgovernancecomponents. Theparameters to trie root and transaction-trie root.
+voting requirements (e.g. any quorum required, majority The sealing process takes place under a single
+required) for registration of additional chains and other, consensus-generating mechanism addressing both the
+less formal system upgrades will be set out in a “master relay-chain’sblockandtheparachains’blockswhichmake
+constitution” but are likely to follow a fairly traditional up part of the relay’s content: parachains are not sepa-
+path, at least initially. The precise formulation is out of rately“committed”bytheirsub-groupsandthencollated
+scope for the present work, but e.g. a two thirds super- later. Thisresultsinamorecomplexprocessfortherelay-
+majoritytopasswithmorethanonethirdoftotalsystem chain, but allows us to complete the entire system’s con-
+stake voting positively may be a sensible starting point. sensus in a single stage, minimising latency and allowing
+Additional operations include the suspension and re- forquitecomplexdata-availabilityrequirementswhichare
+moval of parachains. Suspension would hopefully never helpful for the routing process below.
+8ExistingPoS-basedBFTconsensusschemessuchasTendermintBFTandtheoriginalSlasherfulﬁlltheseassertions.
+POLKADOT: VISION FOR A HETEROGENEOUS MULTI-CHAIN FRAMEWORK DRAFT 1 12
+Thestateofeachparticipant’sconsensusmachinemay The conclusion is a set of signatures demonstrating
+be modelled as a simple (2-dimensional) table. Each par- canonicality. The relay-chain block may then be sealed
+ticipant (validator) has a set of information, in the form and the process of sealing the next block begun.
+ofsigned-statements(“votes”)fromotherparticipants,re-
+garding each parachain block candidate as well the relay- 6.5. Improvements for Sealing Relay Blocks. While
+chainblockcandidate. Thesetofinformationistwopieces this sealing method gives strong guarantees over the sys-
+of data: tem’s operation, it does not scale out particularly well
+since every parachain’s key information must have its
+Availability: does this validator have egress availabilityguaranteedbyoverone-thirdofallvalidators.
+transaction-post information from this block so This means that every validator’s responsibility footprint
+they are able to properly validate parachain can- grows as more chains are added.
+didates on the following block? They may vote Whiledataavailabilitywithinopenconsensusnetworks
+either1(known)or0(notyetknown). Oncethey isessentiallyanunsolvedproblem,therearewaysofmiti-
+vote1,theyarecommittedtovotingsimilarlyfor gatingtheoverheadplacedonvalidatornodes. Onesimple
+the rest of this process. Later votes that do not solution is to realise that while validators must shoulder
+respect this are grounds for punishment. theresponsibility fordataavailability,theyneednotactu-
+Validity: is the parachain block valid and is all ally store, communicate or replicate the data themselves.
+externally-referenced data (e.g. transactions) Secondarydatasilos,possiblyrelatedto(oreventhevery
+available? This is only relevant for validators as- same) collators who compile this data, may manage the
+signedtotheparachainonwhichtheyarevoting. task of guaranteeing availability with the validators pro-
+They may vote either 1 (valid), -1 (invalid) or 0 viding a portion of their interest/income in payment.
+(not yet known). Once they vote non-zero, they However,whilethismightbuysomeintermediatescal-
+are committed to voting this way for the rest of ability, it still doesn’t help the underlying problem; since
+the process. Later votes that do not respect this adding more chains will in general require additional val-
+are grounds for punishment. idators, the ongoing network resource consumption (par-
+ticularlyintermsofbandwidth)growswiththesquareof
+All validators must submit votes; votes may be resub- the chains, an untenable property in the long-term.
+mitted, qualiﬁed by the rules above. The progression of Ultimately, we are likely to keep bashing our heads
+consensusmaybemodelledasmultiplestandardBFTcon- against the fundamental limitation which states that for
+sensus algorithms over each parachain happening in par- a consensus network to be considered available safe, the
+allel. Since these are potentially thwarted by a relatively ongoing bandwidth requirements are of the order of total
+small minority of malicious actors being concentrated in validators times total input information. This is due to
+a single parachain group, the overall consensus exists to the inability of an untrusted network to properly distrib-
+establishabackstop,limitingtheworst-casescenariofrom utethetaskofdatastorageacrossmanynodes,whichsits
+deadlocktomerelyoneormorevoidparachainblocks(and apartfromtheeminentlydistributabletaskofprocessing.
+a round of punishment for those responsible).
+The basic rules for validity of the individual blocks 6.5.1. Introducing Latency. One means of softening this
+(thatallowthetotalsetofvalidatorsasawholetocometo rule is to relax the notion of immediacy. By requir-
+consensusonitbecomingtheuniqueparachaincandidate ing 33%+1 validators voting for availability only eventu-
+to be referenced from the canonical relay): ally, and not immediately, we can better utilise exponen-
+tial data propagation and help even out peaks in data-
+• musthaveatleasttwothirdsofitsvalidatorsvot- interchange. A reasonable equality (though unproven)
+ing positively and none voting negatively; may be:
+• must have over one third validators voting posi-
+tively to the availability of egress queue informa-
+(1) latency=participants×chains
+tion.
+Under the current model, the size of the system scales
+If there is at least one positive and at least one nega- with the number of chains to ensure that processing is
+tive vote on validity, an exceptional condition is created distributed; since each chain will require at least one val-
+and the whole set of validators must vote to determine idatorandweﬁxtheavailabilityattestationtoaconstant
+if there are malicious parties or if there is an accidental proportionofvalidators,thenparticipantssimilarlygrows
+fork. Aside from valid and invalid, a third kind of votes with the number of chains. We end up with:
+are allowed, equivalent to voting for both, meaning that
+thenodehasconﬂictingopinions. Thiscouldbeduetothe
+(2) latency=size2
+node’s owner running multiple implementations which do
+notagree,indicatingapossibleambiguityintheprotocol. Meaning that as the system grows, the bandwidth re-
+Afterallvotesarecountedfromthefullvalidatorset,if quired and latency until availability is known across the
+the losing opinion has at least some small proportion (to network,whichmightalsobecharacterisedasthenumber
+beparameterised;atmosthalf,perhapssigniﬁcantlyless) of blocks before ﬁnality, increases with its square. This is
+of the votes of the winning opinion, then it is assumed to a substantial growth factor and may turn out to be a no-
+be an accidental parachain fork and the parachain is au- tableroadblockerandforceusinto“non-ﬂat”paradigms
+tomatically suspended from the consensus process. Oth- such as composing several “Polkadotes” into a hierarchy
+erwise, we assume it is a malicious act and punish the for multi-level routing of posts through a tree of relay-
+minority who were voting for the dissenting opinion. chains.
+POLKADOT: VISION FOR A HETEROGENEOUS MULTI-CHAIN FRAMEWORK DRAFT 1 13
+6.5.2. Public Participation. One more possible direction 6.5.5. Overweight Blocks. If a validator set is compro-
+is to enlist public participation in the process through a mised,theymaycreateandproposeablockwhichthough
+micro-complaints system. Similar to the ﬁshermen, there valid, takes an inordinate amount of time to execute and
+couldbeexternalpartiestopolicethevalidatorswhoclaim validate. This is a problem since a validator group could
+availability. Their task is to ﬁnd one who appears un- reasonably form a block which takes a very long time to
+able to demonstrate such availability. In doing so they execute unless some particular piece of information is al-
+can lodge a micro-complaint to other validators. PoW or ready known allowing a short cut, e.g. factoring a large
+a staked bond may be used to mitigate the sybil attack prime. If a single collator knew that information, then
+which would render the system largely useless. they would have a clear advantage in getting their own
+candidates accepted as long as the others were busy pro-
+6.5.3. Availability Guarantors. A ﬁnal route would be to cessing the old block. We call these blocks overweight.
+nominateasecondsetofbondedvalidatorsas“availability Protection against validators submitting and validat-
+guarantors”. Thesewouldbebondedjustaswiththenor- ing these blocks largely falls under the same guise as for
+mal validators, and may even be taken from the same set invalid blocks, though with an additional caveat: Since
+(though if so, they would be chosen over a long-term pe- the time taken to execute a block (and thus its status as
+riod, at least per session). Unlike normal validators, they overweight) is subjective, the ﬁnal outcome of a vote on
+would not switch between parachains but rather would misbehaviour will fall into essentially three camps. One
+form a single group to attest to the availability of all im- possibility is that the block is deﬁnitely not overweight—
+portant interchain data. in this case more than two-thirds declare that they could
+This has the advantage of relaxing the equivalence be- execute the block within some limit (e.g. 50% of the to-
+tween participants and chains. Essentially, chains can tal time allowed between blocks). Another is that the
+grow(alongwiththeoriginalchainvalidatorset),whereas blockisdeﬁnitelyoverweight—thiswouldbeifmorethan
+theparticipants,andspeciﬁcallythosetakingpartindata- two-thirds declare that they could not execute the block
+availability testament, can remain at the least sub-linear within said limit. One ﬁnal possibility is a fairly equal
+and quite possibly constant. split of opinion between validators. In this case, we may
+choose to do some proportionate punishment.
+To ensure validators can predict when they may be
+6.5.4. Collator Preferences. Oneimportantaspectofthis
+proposing an overweight block, it may be sensible to re-
+system is to ensure that there is a healthy selection of
+quire them to publish information on their own perfor-
+collators creating the blocks in any given parachain. If a
+mance for each block. Over a suﬃcient period of time,
+single collator dominated a parachain then some attacks
+this should allow them to proﬁle their processing speed
+become more feasible since the likelihood of the lack of
+relative to the peers that would be judging them.
+availability of external data would be less obvious.
+One option is to artiﬁcially weight parachain blocks in
+apseudo-randommechanisminordertofavourawideva-
+riety of collators. In the ﬁrst instance, we would require 6.5.6. Collator Insurance. One issue remains for valida-
+aspartoftheconsensusmechanismthatvalidatorsfavour tors: unlike with PoW networks, to check a collator’s
+parachain block candidates determined to be “heavier”. block for validity, they must actually execute the trans-
+Similarly, we must incentivise validators to attempt to actions in it. Malicious collators can feed invalid or over-
+suggest the weightiest block they can ﬁnd—this could be weight blocks to validators causing them grief (wasting
+done through making a portion of their reward propor- theirresources)andexactingapotentiallysubstantialop-
+tional to the weight of their candidate. portunity cost.
+To ensure that collators are given a reasonable fair To mitigate this, we propose a simple strategy on the
+chance of their candidate being chosen as the winning partofvalidators. Firstly,parachainblockcandidatessent
+candidate in consensus, we make the speciﬁc weight of a to validators must be signed from a relay chain account
+parachainblockcandidatedeterminateonarandomfunc- withfunds;iftheyarenot,thenthevalidatorshoulddrop
+tion connected with each collator. For example, taking it immediately. Secondly, such candidates should be or-
+the XOR distance measure between the collator’s address deredinprioritybyacombination(e.g.multiplication)of
+andsomecryptographically-securepseudorandomnumber the amount of funds in the account up to some cap, the
+determined close to the point of the block being created number of previous blocks that the collator has success-
+(a notional “winning ticket”). This eﬀectively gives each fully proposed in the past (not to mention any previous
+collator (or, more speciﬁcally, each collator’s address) a punishments), and the proximity factor to the winning
+random chance of their candidate block “winning” over ticketasdiscussedpreviously. Thecapshouldbethesame
+all others. as the punitive damages paid to the validator in the case
+To mitigate the sybil attack of a single collator “min- of them sending an invalid block.
+ing”anaddressclosetothewinningticketandthusbeing Todisincentivisecollatorsfromsendinginvalidorover-
+afavouriteeachblock,wewouldaddsomeinertiatoacol- weight block candidates to validators, any validator may
+lator’s address. This may be as simple as requiring them placeinthenextblockatransactionincludingtheoﬀend-
+tohaveabaselineamountoffundsintheaddress. Amore ingblockallegingmisbehaviourwiththeeﬀectoftransfer-
+elegantapproachwouldbetoweighttheproximitytothe ringsomeorallofthefundsinthemisbehavingcollator’s
+winning ticket with the amount of funds parked at the account to the aggrieved validator. This type of trans-
+address in question. While modelling has yet to be done, actionfront-runsanyotherstoensurethecollatorcannot
+itisquitepossiblethatthismechanismenablesevenvery removethefundspriortothepunishment. Theamountof
+small stakeholders to contribute as a collator. funds transferred as damages is a dynamic parameter yet
+POLKADOT: VISION FOR A HETEROGENEOUS MULTI-CHAIN FRAMEWORK DRAFT 1 14
+to be modelled but will likely be a proportion of the val- Possibly going via randomly selected other val-
+idatorblockrewardtoreﬂectthelevelofgriefcaused. To idators for proof of attempt.
+preventmaliciousvalidatorsarbitrarilyconﬁscatingcolla- • Validator : Accept candidate proofs for this
+V
+tors’ funds, the collator may appeal the validator’s deci- block proof[Chain[n][V]]. Vote block validity
+sion with a jury of randomly chosen validators in return • Validator : Accept candidate egress data for
+V
+for placing a small deposit. If they ﬁnd in the valida- next block: FOR EACH subgroup s, accept
+tor’sfavour,thedepositisconsumedbythem. Ifnot,the egress[n][s][N]. Voteblockegressavailability;re-
+deposit is returned and the validator is ﬁned (since the publish among interested validators v such that
+validatorisinamuchmorevaultedposition, theﬁnewill Chain[n+1][v]=Chain[n+1][V].
+likely be rather hefty). • Validator : UNTIL CONSENSUS
+V
+Where: egress[n][from][to]isthecurrentegressqueue
+information for posts going from parachain ‘from‘, to
+6.6. Interchain Transaction Routing. Interchain
+parachain ‘to‘ in block number ‘n‘. Collator is a col-
+S
+transaction routing is one of the essential maintenance
+lator for parachain S. Validators[n][s] is the set of val-
+tasks of the relay-chain and its validators. This is the
+idators for parachain s at block number n. Conversely,
+logicwhichgovernshowapostedtransaction(oftenshort-
+Chain[n][v] is the parachain to which validator v is as-
+ened to simply “post”) gets from being a desired output
+signed on block number n. block.egress[to] is the egress
+from one source parachain to being a non-negotiable in-
+queue of posts from some parachain block block whose
+put of another destination parachain without any trust
+destination parachain is to.
+requirements.
+Since collators collect (transaction) fees based upon
+We choose the wording above carefully; notably we
+their blocks becoming canonical they are incentivised to
+don’trequiretheretohavebeenatransactioninthesource
+ensurethatforeachnext-blockdestination,thesubgroup’s
+parachaintohaveexplicitlysanctionedthispost. Theonly
+membersareinformedoftheegressqueuefromthepresent
+constraints we place upon our model is that parachains
+block. Validators are incentivised only to form a consen-
+must provide, packaged as a part of their overall block
+sus on a (parachain) block, as such they care little about
+processing output, the posts which are the result of the
+which collator’s block ultimately becomes canonical. In
+block’s execution.
+principle, a validator could form an allegiance with a col-
+ThesepostsarestructuredasseveralFIFOqueues;the
+latorandconspiretoreducethechancesofothercollators’
+number of lists is known as the routing base and may be
+blocks becoming canonical, however this is both diﬃcult
+around 16. Notably, this number represents the quantity
+to arrange due to the random selection of validators for
+of parachains we can support without having to resort to
+parachains and could be defended against with a reduc-
+multi-phase routing. Initially, Polkadot will support this
+tion in fees payable for parachain blocks which hold up
+kindofdirectrouting,howeverwewilloutlineonepossible
+the consensus process.
+multi-phaseroutingprocess(“hyper-routing”)asameans
+of scaling out well past the initial set of parachains.
+6.6.1. External Data Availability. Ensuring a parachain’s
+We assume that all participants know the sub-
+externaldataisactuallyavailableisaperennialissuewith
+groupings for next two blocks n, n+1. In summary, the
+decentralisedsystemsaimingtodistributeworkloadacross
+routing system follows these stages:
+the network. At the heart of the issue is the availability
+• Collator : Contact members of Validators[n][S] problem which states that since it is neither possible to
+S
+• Collator : FOR EACH subgroup s: ensure at make a non-interactive proof of availability nor any sort
+S
+least 1 member of Validators[n][s] in contact of proof of non-availability, for a BFT systemto properly
+• Collator : FOR EACH subgroup s: assume validate any transition whose correctness relies upon the
+S
+egress[n−1][s][S] is available (all incoming post availability of some external data, the maximum number
+data to ‘S‘ from last block) of acceptably Byzantine nodes, plus one, of the system
+• Collator : Compose block candidate b for S: must attest to the data being available.
+S
+(b.header,b.ext,b.proof,b.receipt,b.egress) For a system to scale out properly, like Polkadot, this
+• Collator : Send proof information invites a problem: if a constant proportion of validators
+S
+proof[S] = (b.header,b.ext,b.proof,b.receipt) to must attest to the availability of the data, and assuming
+Validators[n][S] that validators will want to actually store the data be-
+• Collator : Ensureexternaltransactiondatab.ext fore asserting it is available, then how do we avoid the
+S
+ismadeavailabletoothercollatorsandvalidators problem of the bandwidth/storage requirements increas-
+• Collator : FOR EACH subgroup s: ing with the system size (and therefore number of valida-
+S
+Send egress information egress[n][S][s] = tors)? Onepossibleanswerwouldbetohaveaseparateset
+(b.header,b.receipt,b.egress[s]) to the re- of validators (availability guarantors), whose order grows
+ceiving sub-group’s members of next block sublinearly with the size of Polkadot as a whole. This is
+Validators[n+1][s] described in 6.5.3.
+• Validator : Pre-connect all same-set members We also have a secondary trick. As a group, colla-
+V
+for nextblock: let N =Chain[n+1][V]; connect tors have an intrinsic incentive to ensure that all data is
+all validators v such that Chain[n+1][v]=N available for their chosen parachain since without it they
+• Validator : Collate all data ingress for this are unable to author further blocks from which they can
+V
+block: FOR EACH subgroup s: Retrieve collecttransactionfees. Collatorsalsoformagroup,mem-
+egress[n−1][s][Chain[n][V]], get from other val- bership of which is varied (due to the random nature of
+idators v such that Chain[n][v] = Chain[n][V]. parachain validator groups) non-trivial to enter and easy
+POLKADOT: VISION FOR A HETEROGENEOUS MULTI-CHAIN FRAMEWORK DRAFT 1 15
+to prove. Recent collators (perhaps of the last few thou- operation since it is likely that collators will share such
+sand blocks) are therefore allowed to issue challenges to data.)
+theavailabilityofexternaldataforaparticularparachain Collator: M+kN: M foraconnectiontoeachrelevant
+block to validators for a small bond. parachain block validator, kN for seeding the egress pay-
+Validators must contact those from the apparently of- loadstosomesubsetofeachparachainvalidatorgroupfor
+fending validator sub-group who testiﬁed and either ac- the next block (and possibly some favoured collator(s)).
+quire and return the data to the collator or escalate the As such, the data path ways per node grow linearly
+matter by testifying to the lack of availability (direct re- with the overall complexity of the system. While this is
+fusaltoprovidethedatacountsasabond-conﬁscatingof- reasonable, as the system scales into hundreds or thou-
+fence, therefore the misbehaving validator will likely just sandsofparachains,somecommunicationlatencymaybe
+droptheconnection)andcontactingadditionalvalidators absorbedinexchangefor alowercomplexitygrowthrate.
+torunthesametest. Inthelattercase,thecollator’sbond Inthiscase,amulti-phaseroutingalgorithmmaybeused
+is returned. in order to reduce the number of instantaneous pathways
+Once a quorum of validators who can make such non- at a cost of introducing storage buﬀers and latency.
+availability testimonials is reached, they are released, the
+6.6.4. Hyper-cubeRouting. Hyper-cuberoutingisamech-
+misbehaving sub-group is punished, and the block re-
+anism which can mostly be build as an extension to the
+verted.
+basic routing mechanism described above. Essentially,
+6.6.2. Posts Routing. Each parachain header includes an rather than growing the node connectivity with the num-
+egress-trie-root; this is the root of a trie containing the berofparachainsandsub-groupnodes,wegrowonlywith
+routing-base bins, each bin being a concatenated list the logarithm of parachains. Posts may transit between
+of egress posts. Merkle proofs may be provided across several parachains’ queues on their way to ﬁnal delivery.
+parachainvalidatorstoprovethataparticularparachain’s Routingitselfisdeterministicandsimple. Webeginby
+blockhadaparticularegressqueueforaparticulardesti- limiting the number of bins in the ingress/egress queues;
+nation parachain. rather than being the total number of parachains, they
+Atthebeginningofprocessingaparachainblock,each aretherouting-base (b). Thiswillbeﬁxedasthenumber
+other parachain’s egress queue bound for said block is of parachains changes, with the routing-exponent (e) in-
+mergedintoourblock’singress queue. Weassumestrong, steadbeingraised. Underthismodel,ourmessagevolume
+probably CSPR9, sub-block ordering to achieve a deter- grows with O(be), with the pathways remaining constant
+ministic operation that oﬀers no favouritism between any andthelatency(ornumberofblocksrequiredfordelivery)
+parachainblockpairing. Collatorscalculatethenewqueue with O(e).
+and drain the egress queues according to the parachain’s Our model of routing is a hypercube of e dimensions,
+logic. with each side of the cube having b possible locations.
+The contents of the ingress queue is written explicitly Each block, we route messages along a single axis. We
+into the parachain block. This has two main purposes: alternate the axis in a round-robin fashion, thus guaran-
+ﬁrstly,itmeansthattheparachaincanbetrustlesslysyn- teeing worst-case delivery time of e blocks.
+chronisedinisolationfromtheotherparachains. Secondly, As part of the parachain processing, foreign-bound
+it simpliﬁes the data logistics should the entire ingress messages found in the ingress queue are routed imme-
+queue not be able to be processed in a single block; val- diately to the appropriate egress queue’s bin, given the
+idators and collators are able to process following blocks currentblocknumber(andthusroutingdimension). This
+without having to source the queue’s data specially. process necessitates additional data transfer for each hop
+If the parachain’s ingress queue is above a threshold on the delivery route, however this is a problem itself
+amount at the end of block processing, then it is marked whichmaybemitigatedbyusingsomealternativemeans
+saturatedontherelay-chainandnofurthermessagesmay of data payload delivery and including only a reference,
+be delivered to it until it is cleared. Merkle proofs are rather than the full payload of the post in the post-trie.
+used to demonstrate ﬁdelity of the collator’s operation in An example of such a hyper-cube routing for a system
+the parachain block’s proof. with 4 parachains, b=2 and e=2 might be:
+Phase 0, on each message M:
+6.6.3. Critique. One minor ﬂaw relating to this basic
+• sub : if M ∈{2,3} then sendTo(2) else keep
+mechanism is the post-bomb attack. This is where all 0 dest
+• sub : if M ∈{2,3} then sendTo(3) else keep
+parachains send the maximum amount of posts possible 1 dest
+• sub : if M ∈{0,1} then sendTo(0) else keep
+to a particular parachain. While this ties up the target’s 2 dest
+• sub : if M ∈{0,1} then sendTo(1) else keep
+ingress queue at once, no damage is done over and above 3 dest
+Phase 1, on each message M:
+a standard transaction DoS attack.
+Operatingnormally,withasetofwell-synchronisedand • sub0: if Mdest ∈{1,3} then sendTo(1) else keep
+non-malicious collators and validators, for N parachains, • sub1: if Mdest ∈{0,2} then sendTo(0) else keep
+N×M totalvalidatorsandLcollatorsperparachain,we • sub2: if Mdest ∈{1,3} then sendTo(3) else keep
+can break down the total data pathways per block to: • sub3: if Mdest ∈{0,2} then sendTo(2) else keep
+Validator: M−1+L+L: M−1fortheothervalidators The two dimensions here are easy to see as the ﬁrst
+in the parachain set, L for each collator providing a can- two bits of the destination index; for the ﬁrst block, the
+didate parachain block and a second L for each collator higher-order bit alone is used. The second block deals
+ofthenextblockrequiringtheegresspayloadsofthepre- with the low-order bit. Once both happen (in arbitrary
+vious block. (The latter is actually more like worst-case order) then the post will be routed.
+9cryptographicallysecurepseudo-random
+POLKADOT: VISION FOR A HETEROGENEOUS MULTI-CHAIN FRAMEWORK DRAFT 1 16
+6.6.5. MaximisingSerendipity. Onealterationofthebasic reductioninsafetycomingfromhavingonlyasingle“ref-
+proposal would see a ﬁxed total of c2−c validators, with erence” implementation).
+c−1validatorsineachsub-group. Eachblock,ratherthan Theprocesstakesthepreviousblock’sheaderandver-
+there being an unstructured repartitioning of validators iﬁes its identity through the recently agreed relay-chain
+among parachains, instead for each parachain sub-group, blockinwhichitshashshouldberecorded. Oncethepar-
+eachvalidatorwouldbeassignedtoauniqueanddiﬀerent entheader’svalidityisascertained,thespeciﬁcparachain
+parachain sub-group on the following block. This would class’s validation function may be called. This is a sin-
+leadtotheinvariantthatbetweenanytwoblocks,forany gle function accepting a number of data ﬁelds (roughly
+twopairingsofparachain,thereexiststwovalidatorswho those given previously) and returning a simple Boolean
+have swapped parachain responsibilities. While this can- proclaiming the validity of the block.
+not be used to gain absolute guarantees on availability Most such validation functions will ﬁrst check the
+(a single validator will occasionally drop oﬄine, even if header-ﬁelds which are able to be derived directly from
+benevolent), it can nonetheless optimise the general case. the parent block (e.g. parent hash, number). Following
+Thisapproachisnotwithoutcomplications. Theaddi- this, they will populate any internal data structures as
+tionofaparachainwouldalsonecessitateareorganisation necessary in order to process transactions and/or posts.
+of the validator set. Furthermore the number of valida- For an Ethereum-like chain this amounts to populating a
+tors,beingtiedtothesquareofthenumberofparachains, trie database with the nodes that will be needed for the
+would start initially very small and eventually grow far fullexecutionoftransactions. Otherchaintypesmayhave
+too fast, becoming untenable after around 50 parachains. other preparatory mechanisms.
+Noneofthesearefundamentalproblems. Intheﬁrstcase, Once done, the ingress posts and external transac-
+reorganisationofvalidatorsetsissomethingthatmustbe tions (or whatever the external data represents) will be
+doneregularlyanyway. Regardingthesizeofthevalidator enacted, balanced according to chain’s speciﬁcation. (A
+set, when too small, multiple validators may be assigned sensible default might be to require all ingress posts be
+to the same parachain, applying an integer factor to the processed before external transactions be serviced, how-
+overall total of validators. A multi-phase routing mecha- ever this should be for the parachain’s logic to decide.)
+nismsuchasHypercubeRouting,discussedin6.6.4would Through this enactment, a series of egress posts will be
+alleviate the requirement for large number of validators createdanditwillbeveriﬁedthatthesedoindeedmatch
+when there is a large number of chains. the collator’s candidate. Finally, the properly populated
+header will be checked against the candidate’s header.
+With a fully validated candidate block, the validator
+6.7. ParachainValidation. Avalidator’smainpurpose
+canthenvoteforthehashofitsheaderandsendallrequi-
+is to testify, as a well-bonded actor, that a parachain’s
+site validation information to the co-validators in its sub-
+blockisvalid,includingbutnotlimitedtoanystatetran-
+group.
+sition,anyexternaltransactionsincluded,theexecutionof
+any waiting posts in the ingress queue and the ﬁnal state
+of the egress queue. The process itself is fairly simple. 6.7.1. Parachain Collators. Parachain collators are un-
+Oncethevalidatorsealedthepreviousblocktheyarefree bonded operators who fulﬁll much of the task of miners
+to begin working to provide a candidate parachain block onthepresent-dayblockchainnetworks. Theyarespeciﬁc
+candidate for the next round of consensus. to a particular parachain. In order to operate they must
+Initially, the validator ﬁnds a parachain block candi- maintain both the relay-chain and the fully synchronised
+datethroughaparachain collator (describednext)orone parachain.
+of its co-validators. The parachain block candidate data The precise meaning of “fully synchronised” will de-
+includes the block’s header, the previous block’s header, pend on the class of parachain, though will always in-
+any external input data included (for Ethereum and Bit- clude the present state of the parachain’s ingress queue.
+coin,suchdatawouldbereferredtoastransactions,how- In Ethereum’s case it also involves at least maintaining
+ever in principle they may include arbitrary data struc- a Merkle-tree database of the last few blocks, but might
+turesforarbitrarypurposes),egressqueuedataandinter- alsoincludevariousotherdatastructuresincludingBloom
+nal data to prove state-transition validity (for Ethereum ﬁlters for account existence, familial information, logging
+this would be the various state/storage trie nodes re- outputs and reverse lookup tables for block number.
+quired to execute each transaction). Experimental evi- In addition to keeping the two chains synchronised, it
+dence shows this full dataset for a recent Ethereum block mustalso“ﬁsh”fortransactionsbymaintainingatransac-
+to be at the most a few hundred KiB. tion queue and accepting properly validated transactions
+Simultaneously, if not yet done, the validator will be from the public network. With the queue and chain, it is
+attempting to retrieve information pertaining to the pre- abletocreatenewcandidateblocksforthevalidatorscho-
+viousblock’stransition,initiallyfromthepreviousblock’s senateachblock(whoseidentityisknownsincetherelay-
+validators and later from all validators signing for the chainissynchronised)andsubmitthem,togetherwiththe
+availability of the data. variousancillaryinformationsuchasproof-of-validity,via
+Oncethevalidatorhasreceivedsuchacandidateblock, the peer network.
+theythenvalidateitlocally. Thevalidationprocessiscon- Foritstrouble,itcollectsallfeesrelatingtothetrans-
+tained within the parachain class’s validator module, a actions it includes. Various economics ﬂoat around this
+consensus-sensitivesoftwaremodulethatmustbewritten arrangement. Inaheavilycompetitivemarketwherethere
+for any implementation of Polkadot (though in principle isasurplusofcollators,itispossiblethatthetransaction
+a library with a C ABI could enable a single library to feesbesharedwiththeparachainvalidatorstoincentivise
+be shared between implementations with the appropriate the inclusion of a particular collator’s block. Similarly,
+POLKADOT: VISION FOR A HETEROGENEOUS MULTI-CHAIN FRAMEWORK DRAFT 1 17
+some collators may even raise the required fees that need ofthatparachaintodiscoverandshareblockcan-
+to be paid in order to make the block more attractive to didates.
+validators. In this case, a natural market should form • A <-> P[s] | C | A: Each availability guarantor
+with transactions paying higher fees skipping the queue willneedtocollectconsensus-sensitivecross-chain
+and having faster inclusion in the chain. data from the validators assigned to it; collators
+mayalsooptimisethechanceofconsensusontheir
+6.8. Networking. Networkingontraditionalblockchains block by advertising it to availability guarantors.
+likeEthereumandBitcoinhasrathersimplerequirements. Once they have it, the data will be disbursed to
+Alltransactionsandblocksarebroadcastinasimpleundi- other such guarantor to facilitate consensus.
+rectedgossip. Synchronisationismoreinvolved,especially • P[s] <-> A | P[s’]: Parachain validators will
+with Ethereum but in reality this logic was contained in needtocollectadditionalinputdatafromthepre-
+thepeerstrategyratherthantheprotocolitselfwhichre- vious set of validators or the availability guaran-
+solved around a few request and answer message types. tors.
+WhileEthereummadeprogressoncurrentprotocolof- • F[s]<->P:Whenreporting,ﬁshermenmayplace
+feringswiththedevp2pprotocol,whichallowedformany a claim with any participant.
+subprotocols to be multiplexed over a single peer connec- • M <-> M | P | A: General relay-chain clients dis-
+tion and thus have the same peer overlay support many burse data from validators and guarantors.
+p2p protocols simultaneously, the Ethereum portion of • S[s]<->S[s] | P[s] | A:Parachainclientsdis-
+the protocol still remained relatively simple and the p2p burse data from the validator/guarantors.
+protocol as a while remains unﬁnished with important • L[s] <-> L[s] | S[s]: Parachain light clients
+functionality missing such as QoS support. Sadly, a de- disburse data from the full clients.
+sire to create a more ubiquitous “web 3” protocol largely
+To ensure an eﬃcient transport mechanism, a “ﬂat”
+failed,withtheonlyprojectsusingitbeingthoseexplicitly
+overlay network—like Ethereum’s devp2p—where each
+funded from the Ethereum crowd-sale.
+node does not (non-arbitrarily) diﬀerentiate ﬁtness of its
+The requirements for Polkadot are rather more sub-
+peers is unlikely to be suitable. A reasonably extensible
+stantial. Ratherthenawhollyuniformnetwork,Polkadot
+peer selection and discovery mechanism will likely need
+has several types of participants each with diﬀerent re-
+to be included within the protocol as well as aggressive
+quirements over their peer makeup and several network
+planning an lookahead to ensure the right sort of peers
+“avenues” whose participants will tend to converse about
+are “serendipitously” connected at the right time.
+particular data. This means a substantially more struc-
+The precise strategy of peer make-up will be diﬀer-
+turednetworkoverlay—andaprotocolsupportingthat—
+entforeachclassofparticipant: foraproperlyscaled-out
+will likely be necessary. Furthermore, extensibility to fa-
+multi-chain, collators will either need to be continuously
+cilitatefutureadditionssuchasnewkindsof“chain”may
+reconnecting to the accordingly elected validators, or will
+themselves require a novel overlay structure.
+need on-going agreements with a subset of the validators
+While an in-depth discussion of how the networking
+to ensure they are not disconnected during the vast ma-
+protocol may look is outside of the scope of this docu-
+jority of the time that they are useless for that valida-
+ment, some requirements analysis is reasonable. We can
+tor. Collatorswillalsonaturallyattempttomaintainone
+roughlybreakdownournetworkparticipantsintotwosets
+ormorestableconnectionsintotheavailabilityguarantor
+(relay-chain, parachains) each of three subsets. We can
+settoensureswiftpropagationoftheirconsensus-sensitive
+alsostatethateachoftheparachainparticipantsareonly
+data.
+interestedinconversingbetweenthemselvesasopposedto
+Availability guarantors will mostly aim to maintain a
+participants in other parachains:
+stableconnectiontoeachotherandtovalidators(forcon-
+• Relay-chain participants:
+sensusandtheconsensus-criticalparachaindatatowhich
+• Validators: P, split into subsets P[s] for each
+theyattest),aswellastosomecollators(fortheparachain
+parachain
+data) and some ﬁshermen and full clients (for dispersing
+• Availability Guarantors: A (this may be repre-
+information). Validators will tend to look for other val-
+sentedbyValidatorsinthebasicformofthepro-
+idators, especially those in the same sub-group and any
+tocol)
+collators that can supply them with parachain block can-
+• Relay-chain clients: M (note members of each
+didates.
+parachain set will also tend to be members of M)
+Fishermen,aswellasgeneralrelay-chainandparachain
+• Parachain participants:
+clients will generally aim to keep a connection open to a
+• Parachain Collators: C[0], C[1], ...
+validator or guarantor, but plenty of other nodes similar
+• Parachain Fishermen: F[0], F[1], ...
+tothemselvesotherwise. Parachainlightclientswillsimi-
+• Parachain clients: S[0], S[1], ...
+larlyaimtobeconnectedtoafullclientoftheparachain,
+• Parachain light-clients: L[0], L[1], ...
+if not just other parachain light-clients.
+Ingeneralwenameparticularclassesofcommunication
+will tend to take place between members of these sets: 6.8.1. The Problem of Peer Churn. In the basic proto-
+• P | A <-> P | A: The full set of valida- col proposal, each of these subsets constantly alter ran-
+tors/guarantors must be well-connected to domlywitheachblockasthevalidatorsassignedtoverify
+achieve consensus. the parachain transitions are randomly elected. This can
+• P[s]<->C[s] | P[s]: Eachvalidatorasamem- be a problem should disparate (non-peer) nodes need to
+berofagivenparachaingroupwilltendtogossip pass data between each other. One must either rely on
+with other such members as well as the collators a fairly-distributed and well-connected peer network to
+POLKADOT: VISION FOR A HETEROGENEOUS MULTI-CHAIN FRAMEWORK DRAFT 1 18
+ensurethatthehop-distance(andthereforeworst-casela- On its own this isn’t so useful since we cannot read-
+tency) only grows with the logarithm of the network size ily assume that the oﬀ-chain caller has available to them
+(aKademlia-likeprotocol[13]mayhelphere),oronemust whatever value mechanism is recognised by the break-in
+introduce longer block times to allow the necessary con- contract. However, we can imagine a secondary “break-
+nection negotiation to take place to keep a peer-set that out” contract in the source chain. The two contracts to-
+reﬂects the node’s current communication needs. gether would form a bridge, recognising each other and
+Neither of these are great solutions: long block times providingvalue-equivalence. (Staking-tokens,availableto
+being forced upon the network may render it useless for each,couldbeusedtosettleupthebalance-of-payments.)
+particular applications and chains. Even a perfectly fair Calling into another such chain would mean proxying
+and connected network will result in substantial wastage through this bridge, which would provide the means of
+ofbandwidthasitscalesduetouninterestednodeshaving negotiating the value transfer between chains in order to
+to forward data useless to them. pay for the computation resources required on the desti-
+While both directions may form part of the solution, nation parachain.
+areasonableoptimisationtohelpminimiselatencywould
+be to restrict the volatility of these parachain validator
+7.2. Additional Chains. While the addition of a
+sets, either reassigning the membership only between se-
+parachain is a relatively cheap operation, it is not free.
+ries of blocks (e.g. in groups of 15, which at a 4 second
+More parachains means fewer validators per parachain
+blocktimewouldmeanalteringconnectionsonlyonceper
+and,eventually,alargernumberofvalidatorseachwitha
+minute)orbyrotatingmembershipinanincrementalfash-
+reduced average bond. While the issue of a smaller coer-
+ion, e.g. changing by one member at a time (e.g. if there
+cion cost for attacking a parachain is mitigated through
+are 15 validators assigned to each parachain, then on av-
+ﬁshermen, the growing validator set essentially forces a
+erageitwouldbeafullminutebetweencompletelyunique
+higher degree of latency due to the mechanics of the un-
+sets). By limiting the amount of peer churn, and ensur-
+derlying consensus method. Furthermore each parachain
+ing that advantageous peer connections are made well in
+brings with it the potential to grief validators with an
+advance through the partial predictability of parachain
+over-burdensome validation algorithm.
+sets, we can help ensure each node keep a permanently
+As such, there will be some “price” that validators
+serendipitous selection of peers.
+and/or the stake-holding community will extract for the
+addition of a new parachain. This market for chains will
+6.8.2. Path to an Eﬀective Network Protocol. Likely the
+possibly see the addition of either:
+most eﬀective and reasonable development eﬀort will fo-
+cusonutilisingapre-existingprotocolratherthanrolling • Chainsthatlikelyhavezeronetcontributionpay-
+our own. Several peer-to-peer base protocols exist that ing(intermsoflockinguporburningstakingto-
+wemayuseoraugmentincludingEthereum’sowndevp2p kens) to be made a part (e.g. consortium chains,
+[22], IPFS’s libp2p [1] and GNU’s GNUnet [4]. A full re- Doge-chains, app-speciﬁc chains);
+view of these protocols and their relevance for building a • chains that deliver intrinsic value to the network
+modularpeernetworksupportingcertainstructuralguar- through adding particular functionality diﬃcult
+antees,dynamicpeersteeringandextensiblesub-protocols togetelsewhere(e.g.conﬁdentiality,internalscal-
+is well beyond the scope of this document but will be an ability, service tie-ins).
+important step in the implementation of Polkadot. Essentially,thecommunityofstakeholderswillneedto
+be incentivized to add child chains—either ﬁnancially or
+7. Practicalities of the Protocol through the desire to add featureful chains to the relay.
+Itisenvisionedthatnewchainsaddedwillhaveavery
+7.1. Interchain Transaction Payment. While a great
+shortnoticeperiodforremoval,allowingfornewchainsto
+amountoffreedomandsimplicityisgainedthroughdrop-
+be experimented with without any risk of compromising
+pingtheneedforaholisticcomputationresourceaccount-
+the medium or long-term value proposition.
+ing framework like Ethereum’s gas, this does raise an im-
+portant question: without gas, how does one parachain
+avoid another parachain from forcing it to do computa-
+8. Conclusion
+tion? Whilewecanrelyontransaction-postingressqueue
+buﬀerstopreventonechainfromspamminganotherwith Wehaveoutlinedadirectiononemaytaketoauthora
+transaction data, there is no equivalent mechanism pro- scalable, heterogeneous multi-chain protocol with the po-
+vided by the protocol to prevent the spamming of trans- tentialtobebackwardscompatibletocertain,pre-existing
+action processing. blockchain networks. Under such a protocol, participants
+This is a problem left to the higher level. Since chains work in enlightened self-interest to create an overall sys-
+are free to attach arbitrary semantics on to the incoming tem which can be extended in an exceptionally free man-
+transaction-post data, we can ensure that computation ner and without the typical cost for existing users that
+must be paid-for before started. In a similar vein to the comes from a standard blockchain design. We have given
+model espoused by Ethereum Serenity, we can imagine aroughoutlineofthearchitectureitwouldtakeincluding
+a “break-in” contract within a parachain which allows a the nature of the participants, their economic incentives
+validator to be guaranteed payment in exchange for the andtheprocessesunderwhichtheymustengage. Wehave
+provision of a particular volume of processing resources. identiﬁed a basic design and discussed its strengths and
+These resources may be measured in something like gas, limitations; accordingly we have further directions which
+but could also be some entirely novel model such as sub- may ease those limitations and yield further ground to-
+jective time-to-execute or a Bitcoin-like ﬂat-fee model. wards a fully scalable blockchain solution.
+POLKADOT: VISION FOR A HETEROGENEOUS MULTI-CHAIN FRAMEWORK DRAFT 1 19
+8.1. Missing Material and Open Questions. Net- [5] VitalikButerin.Ethereum: Anext-generationsmartcontract
+work forking is always a possibility from divergent im- and decentralized application platform. https://github.com/
+ethereum/wiki/wiki/White-Paper,2013.
+plementationsoftheprotocol. Therecoveryfromsuchan
+[6] VitalikButerin.Ethereum2.0mauvepaper.2016.
+exceptional condition was not discussed. Given the net- [7] VitalikButerin.Serenitypoc2.2016.
+workwillnecessarilyhaveanon-zeroperiodofﬁnalisation, [8] Nxt community. Whitepaper: Nxt. http://wiki.nxtcrypto.
+org/wiki/Whitepaper:Nxt,2013.
+it should not be a large issue to recover from the relay- [9] Christopher Copeland and Hongxia Zhong. Tangaroa: a
+chainforking,howeverwillrequirecarefulintegrationinto byzantine fault tolerant raft. http://www.scs.stanford.edu/
+14au-cs244b/labs/projects/copeland_zhong.pdf,2016.
+the consensus protocol.
+[10] Ethan Buchman Jae Kwon. Cosmos: A network of
+Bond-conﬁscationandconverselyrewardprovisionhas distributed ledgers. https://github.com/cosmos/cosmos/blob/
+not been deeply explored. At present we assume rewards master/WHITEPAPER.md,2016.
+[11] Jae Kwon. Tendermint: Consensus without mining. http:
+are provided under a winner-takes-all basis: this may not
+//tendermint.com/docs/tendermint.pdf,2014.
+givethebestincentivisationmodelforﬁshermen. Ashort- [12] Daniel Larimer. Bitshares. http://docs.bitshares.org/
+periodcommit-revealprocesswouldallowmanyﬁshermen bitshares/history.html,2013.
+[13] Petar Maymounkov and David Mazi`eres. Kademlia: A peer-
+to claim the prize giving a fairer distribution of rewards, to-peerinformationsystembasedonthexormetric.InIPTPS
+howevertheprocesscouldleadtoadditionallatencyinthe ’01 Revised Papers from the First International Workshop
+onPeer-to-PeerSystems,pages53–65,2002.
+discovery of misbehaviour.
+[14] AndrewMiller, YuXia, KyleCroman, ElaineShi, andDawn
+Song. The honey badger of bft protocols. Technical report,
+8.2. Acknowledgments. Many thanks to all of the
+CryptologyePrintArchive2016/199,2016.
+proof-readers who have helped get this in to a vaguely [15] SatoshiNakamoto.Bitcoin: Apeer-to-peerelectroniccashsys-
+presentable shape. In particular, Peter Czaban, Bjo¨rn tem.https://bitcoin.org/bitcoin.pdf,2008.
+[16] Diego Ongaro and John Ousterhout. In search of an un-
+Wagner, Ken Kappler, Robert Habermeier, Vitalik Bu-
+derstandable consensus algorithm. In 2014 USENIX Annual
+terin, Reto Trinkler and Jack Petersson. Thanks to all Technical Conference (USENIX ATC 14), pages 305–319,
+the people who have contributed ideas or the beginnings 2014.
+[17] Parity.Parityethereumclient.https://parity.io,2016.
+thereof,MarekKotewiczandAeronBuchanandeservees- [18] Serguei Popov. The tangle. https://www.iotatoken.com/IOTA_
+pecialmention. Andthankstoeveryoneelsefortheirhelp Whitepaper.pdf,2016.
+[19] Youcai Qian. Randao. https://github.com/randao/randao,
+along the way. All errors are my own.
+2015.
+Portions of this work, including initial research into [20] Eli Ben Sasson, Alessandro Chiesa, Christina Garman,
+consensus algorithms, was funded in part by the British MatthewGreen, IanMiers, EranTromer, andMadarsVirza.
+Zerocash: Decentralized anonymous payments from bitcoin.
+Government under the Innovate UK programme.
+In 2014 IEEE Symposium on Security and Privacy, pages
+459–474.IEEE,2014.
+References [21] PaulSnow,BrianDeery,JackLu,DavidJohnston,andPeter
+Kirb.Factom: Businessprocessessecuredbyimmutableaudit
+[1] The specs for libp2p and associated submodules. https:// trails on the blockchain. https://raw.githubusercontent.
+github.com/libp2p/specs. com/FactomProject/FactomDocs/master/Factom_Whitepaper.pdf,
+[2] Webassembly.http://webassembly.org/,2016. 2014.
+[3] Adam Back, Matt Corallo, Luke Dashjr, Mark Friedenbach, [22] Gavin Wood. Devp2p wire protocol. https://github.com/
+GregoryMaxwell,AndrewMiller,AndrewPoelstra,JorgeTi- ethereum/wiki/wiki/libp2p-Whitepaper,2014.
+mon,andPieterWuille.Enablingblockchaininnovationswith [23] Gavin Wood. Ethereum: a secure decentralised generalised
+peggedsidechains.2014. transactionledger.http://gavwood.com/paper.pdf,2014.
+[4] Krista Bennett, Christian Grothoﬀ, Tzvetan Horozov, Ioana [24] Gavin Wood. Yellow paper committee. https://github.com/
+Patrascu, and Tiberiu Stef. Gnunet-a truly anonymous net- gavofyork/curly-engine,2016.
+workinginfrastructure.InIn: Proc.PrivacyEnhancingTech-
+nologiesWorkshop(PET.Citeseer,2002.
+Appendix A. Functional Components
+Seen from a high-level, the Parity Polkadot Platform stack has a number of functional components and any develop-
+ment of it will require a substantial amount of research and development prior to it being completed.
+Somecomponentsaredependentonothersexisting,othersareindependent. Someareveryimportantfortheplatform
+to function properly, others are nice-to-haves. Some are of indeterminate complexity and have not yet been deemed
+feasible, others are relatively straight-forward.
+Here we’ll try to list as many such components as possible along with where they would ﬁt into our development
+roadmap.
+Networking subsystem: Thisisthemeansbywhichapeernetworkisformedandmaintained. Simplealterations
+ofexistingpeer-to-peernetworkinglibraries(devp2pmostlikely)willbesuﬃcientforaninitialsystem. However,
+additionalresearchanddevelopmentwillbenecessarytoensurethatasthenetworkgrows,thenetworktopology
+becomes increasingly structured allowing for optimal data logistics. For the ﬁnal deployment, adaptations of
+libp2p, devp2p and GNUnet should be ﬁrst considered. If requirements are not likely to be met then a new
+protocol should be considered.
+Consensus mechanism: Proof-of-authority consensus mechanism supporting rich validator statements and al-
+lowing multiple independent items to be agreed upon under a single series based upon subjective reception of
+thepartialsetofvalidatorstatements. Themechanismshouldallowtheproofofmisbehaviourforthedismissal
+of malicious validators but need not involve any staking mechanism. A substantial amount of research and
+prototyping will precede the development of this component.
+Proof-of-stake chain: Extending the consensus mechanism into proof-of-stake territory; this module includes
+stakingtokens,managingentryandexitfromthevalidatorpool,amarketmechanismfordeterminingvalidator
+rewards, ﬁnalising the approval-voting nomination mechanism and managing bond-conﬁscation and dismissal.
+It includes a substantial amount of research and prototyping prior to ﬁnal development.
+POLKADOT: VISION FOR A HETEROGENEOUS MULTI-CHAIN FRAMEWORK DRAFT 1 20
+Parachain implementation: Aﬁrstparachainimplementation,likelytobebasedheavilyonanexistingblockchain
+protocol such as Bitcoin or (more likely, since it provides for rich transactions) Ethereum. This will include an
+integration with the proof-of-stake chain, allowing the parachain to gain consensus without its own internal
+consensus mechanism.
+Transaction processing subsystem: An evolution of the parachain and relay-chain, this will allow for trans-
+actions to be sent, received and propagated. It includes the designs of transaction queuing and optimised
+transaction routing on the network layer.
+Transaction-routing subsystem: This introduces more speciﬁcs into the relay-chain’s behaviour. Initially,
+adding transactability into parachains will be needed. Following that, with two parachains hard-coded into
+the relay-chain, it will include the management of the ingress/egress queues. Eventually this will develop along
+with the network protocol into a means of directed transaction propagation, ensuring independent parachain
+collators are not overly exposed to transactions that are not of interest.
+Relay chain: This is the ﬁnal stage of the relay-chain, allowing the dynamic addition, removal and emergency
+pausingofparachains,thereportingofbadbehaviourandincludesimplementationofthe“ﬁsherman”function-
+ality.
+Independent collators: This is the delivery of an alternative chain-speciﬁc collator functionality. It includes
+proof creation (for collators), parachain misbehaviour detection (for ﬁshermen) and the validation function (for
+validators). It also includes any additional networking required to allow the two to discover and communicate.
+Network dynamics modelling and research: Theoveralldynamicsofthisprotocolshouldberesearchedthor-
+oughly. Thiscanhappenboththroughoﬄinenetworkmodellingandthroughempiricalevidencethroughsimu-
+latednodes. Thelatterisdependentontherelay-chainandwillincludethedevelopmentofastructuredlogging
+protocol allowing nodes to submit detailed reports on their actions to a central hub for collation.
+Network intelligence: As a complex decentralised multi-party network, a network intelligence hub similar to
+http://ethstats.netisneededtomonitorthelife-signsofthenetworkasawholeandﬂagpotentiallydisruptive
+behaviour. Structured logging should be used to generate and visualise this data in real-time for maximum
+eﬃciency. It is dependent on the relay-chain being in a reasonably complete state.
+Information publication platform: This is a mechanism for publishing data relating to the blockchain, and
+eﬀectively means a decentralised content-discovery network. Initially it can be handled by basic peer-to-peer
+lookupsbutfordeploymentwilllikelyrequireamorestructuredandrobustsolutionsinceavailabilitywillbecome
+a critical piece of information. IPFS integration may be the most sensible means of achieving these goals.
+Javascript interaction bindings: Themainmeansofinteractingwiththenetworkwilllikelyfollowtheexample
+ofEthereumandassuchhigh-qualityJavascriptbindingsarecriticaltohave. Ourbindingswillcoverinteractions
+with the relay-chain and the initial parachain and as such depends on them.
+Governance: Initially, this will be a meta-protocol on the relay-chain for managing exceptional events such as
+hard-forks,soft-forksandprotocolreparameterisation. Itwillincludeamodernstructuretohelpmanageconﬂict
+and prevent live-lock. Ultimately, this may become a full meta-protocol layer able to enact changes normally
+reserved for hard-forks. Requires the relay chain.
+Interaction platform: A platform by which “typical” users are able to interact with the system, along with
+minimalfunctionalitytofacilitatecommontaskssuchasenteringthebondprocess,voting,nomination,becoming
+a validator, ﬁsherman or collator and staking token transfer. Depends upon having a functional relay-chain.
+Light clients: Light-client technology for both the relay-chain and any parachains developed. This will allow
+clients to be able to gain information regarding activity on the chains with a high degree of trust-freedom and
+without any substantial requirement of storage or bandwidth. Depends upon the relay-chain.
+Parachain UI: A multi-chain, multi-token wallet and identity management system. It requires light-client tech-
+nology and the interaction platform. This is not needed for any initial network deployment.
+On-chain Dapp services: Theremaybevariousservicesthatwillneedtobedeployedonanyinitialparachains
+such as registration hubs for APIs, names, natural-language speciﬁcations and code. This depends on the
+parachain but is not strictly needed for any initial network deployment.
+Application development tools: This includes various bits of software required to help developers. Examples
+include compilers, key management tools, data archivers and VM simulators. Many others exist. These will
+needtobedevelopedasrequired. Technologieswillbechosenpartlytominimisetheneedforsuchtools. Many
+will not be strictly required.
+Ethereum-as-a-parachain: Trust-free bridge to Ethereum and back again, allowing posted transactions to be
+routed from parachains into Ethereum (and treated like any other transaction of external origin) and allow
+Ethereum contracts to be able to post transactions to parachains and the accounts therein. Initially, this will
+be modelled to ascertain feasibility and get any structural limitations based around the number of validators
+required by the consensus process, a component on which it is dependent. A proof-of-concept can be built
+following this and ﬁnal development will be dependent on the relay-chain itself.
+Bitcoin-RPC compatibility layer: AsimpleRPCcompatibilitylayerfortherelay-chainallowinginfrastructure
+already built using that protocol to be interoperable with Polkadot and as such minimise eﬀort for support. A
+stretch goal requiring the relay-chain.
+POLKADOT: VISION FOR A HETEROGENEOUS MULTI-CHAIN FRAMEWORK DRAFT 1 21
+Web 2.0 bindings: Bindings into common Web 2.0 technology stacks to facilitate the usage of Polkadot infras-
+tructurewithlegacysystems. Astretchgoaldependentontheinitialparachainsandanyon-chaininfrastructure
+to be exposed.
+zk-SNARK parachain example: Aparachainutilisingthepropertiesofzk-SNARKsinordertoensureidentities
+of transactors on it are kept private. A stretch goal dependent on the relay-chain.
+Encrypted parachain example: Aparachainthatkeepseachitemofstateencryptedandsigned. Theseensure
+the enforcement of access controls over inspection and modiﬁcation of the data therein allowing commercial
+regulated operations to conform as necessary. Would include proof-of-authority mechanisms to allow Polkadot
+validatorstoguaranteesomedegreeofcorrectnessofstatetransitionswithoutgainingexposuretotheunderlying
+information. A stretch goal depending on the relay-chain.
+Trust-free Bitcoin bridge: Trust-free Bitcoin “two-way-peg” functionality. This would possibly use threshold
+signatures or alternatively an n of m multi-signature Bitcoin account together with SPV proofs & specialised
+ﬁshermen. Developmentispredicatedonaninitialfeasibilityanalysisgivingafavourableresult. Someadditional
+functionality may need to be added to (or unlocked from) the Bitcoin protocol to support this functionality.
+Abstract/low-level decentralised applications: Trust-freetokenexchange,asset-trackinginfrastructure,crowd-
+sale infrastructure.
+Contract language: Certainly not an integral part of the project, but a nice stretch-goal nonetheless. Would
+includeasafecontractlanguagetogetherwithtutorials,guidelinesandeducationaltools. Itmayincludemeans
+of making formal proofs as per the original Solidity language vision or could be based around some other
+programmingparadigmwhichhelpsminimisecriticalprocesserrorssuchasfunctionalprogrammingorcondition-
+orientated programming.
+IDE: Based on the contract language, this would facilitate editing, collaboration, publication and debugging of
+contracts on the parachains. A far stretch goal.
+Appendix B. Frequently Asked Questions
+Is Polkadot designed to replace (insert blockchain here): No. The goal of Polkadot is to provide a frame-
+work under which new blockchains may be created and to which existing blockchains can, if their communities
+desire, be transitioned.
+Is Polkadot designed to replace (insert crypto-currency here): No. Polkadot tokens are neither intended
+nordesignedtobeusedasacurrency. Theywouldmakeabadcurrency: mostwillremainilliquidinthestaking
+system and those that are liquid will face substantial fees for transfer of ownership. Rather, the purpose of
+Polkadot tokens is to be a direct representation of stake in the Polkadot network.
+What is the inﬂation rate for Polkadot staking tokens: The Polkadot staking token base expansion is un-
+limited. It rises and lowers according to market eﬀects in order to target a particular proportion of tokens held
+under long-term bond in the validation process.
+Why does staking token ownership reﬂect stakeholding: Thisisamechanismrealisedbythefactthatthey
+underpinthenetwork’ssecurity. AssuchtheirvalueistiedtotheoveralleconomicvaluethatPolkadotprovides.
+Any actors who gain overall value from Polkadot operating correctly are incentivised to ensure it continues to
+do so. The best means of doing so is to take part in the validation process. This generally implies ownership of
+staking tokens.
