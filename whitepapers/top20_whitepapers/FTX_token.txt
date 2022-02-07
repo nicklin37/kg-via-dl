@@ -1,0 +1,401 @@
+FTT Whitepaper
+Initially Released June 25, 2019
+1
+Contents
+1 Our Mission 4
+2 Why Invest? – All-Star Team 4
+3 Track Record of Proven Success 4
+3.1 Team Background . . . . . . . . . . . . . . . . . . . . . . . . . . 4
+3.2 Alameda Research . . . . . . . . . . . . . . . . . . . . . . . . . . 4
+3.3 OTC . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 5
+4 FTX Features 5
+4.1 History . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 5
+4.2 Features . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 5
+4.2.1 Preventing Clawbacks . . . . . . . . . . . . . . . . . . . . 5
+4.2.2 Centralized Collateral Pool + Universal Stablecoin Set-
+tlement . . . . . . . . . . . . . . . . . . . . . . . . . . . . 5
+4.2.3 Non-inverted futures . . . . . . . . . . . . . . . . . . . . . 6
+4.2.4 Innovative New Product: Leveraged Tokens . . . . . . . . 6
+4.2.5 OTC portal . . . . . . . . . . . . . . . . . . . . . . . . . . 7
+5 Why FTX is Uniquely Good and Hard to Replicate 7
+5.1 Live Product . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 7
+5.2 Liquidity . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 7
+5.3 Domain Expertise . . . . . . . . . . . . . . . . . . . . . . . . . . 7
+5.4 Pioneering New Products . . . . . . . . . . . . . . . . . . . . . . 8
+5.5 Strong Network and Reputation. . . . . . . . . . . . . . . . . . . 8
+5.6 Fast Development Cycle . . . . . . . . . . . . . . . . . . . . . . . 8
+6 Revenue Model 8
+6.1 Exchange Fees . . . . . . . . . . . . . . . . . . . . . . . . . . . . 8
+6.2 Leveraged Token Fees . . . . . . . . . . . . . . . . . . . . . . . . 8
+6.3 Other Fees. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 9
+6.4 Exemptions . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 9
+6.5 OTC . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 9
+7 Strategies to Acquire Users and Grow Volume 9
+7.1 Conventional PR/Marketing . . . . . . . . . . . . . . . . . . . . . 9
+7.2 FTX OTC - One of the Tightest Spreads in the Industry . . . . 10
+7.3 FTX OTC - Stablecoin Fiat Gateway . . . . . . . . . . . . . . . 10
+7.4 Partnerships. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 10
+7.5 Listing New Leveraged Tokens on FTX . . . . . . . . . . . . . . 10
+7.6 Listing Leveraged Tokens on Other Exchanges . . . . . . . . . . 10
+7.7 Future Initiatives . . . . . . . . . . . . . . . . . . . . . . . . . . . 10
+2
+8 Token Utility 11
+8.1 Increasing FTT Utility . . . . . . . . . . . . . . . . . . . . . . . . 11
+8.1.1 Token Burn . . . . . . . . . . . . . . . . . . . . . . . . . . 11
+8.1.2 Collateral . . . . . . . . . . . . . . . . . . . . . . . . . . . 11
+8.1.3 Discount on Trading Fees . . . . . . . . . . . . . . . . . . 11
+8.1.4 OTC Rebates . . . . . . . . . . . . . . . . . . . . . . . . . 11
+8.1.5 OTC Burn . . . . . . . . . . . . . . . . . . . . . . . . . . 11
+8.1.6 Socialized Gains . . . . . . . . . . . . . . . . . . . . . . . 11
+8.1.7 White Label Solutions . . . . . . . . . . . . . . . . . . . . 12
+8.1.8 Future Expansion . . . . . . . . . . . . . . . . . . . . . . 12
+9 Growth Potential 12
+10 Estimated FTX Volume 12
+10.1 OTC . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 12
+10.1.1 Crypto Trading Firms . . . . . . . . . . . . . . . . . . . . 13
+10.1.2 Leveraged Tokens. . . . . . . . . . . . . . . . . . . . . . . 13
+10.1.3 OTC Growth . . . . . . . . . . . . . . . . . . . . . . . . . 13
+11 In Closing 13
+3
+1 Our Mission
+FTX is a cryptocurrency derivatives exchange that oﬀers futures, leveraged
+tokens and OTC trading. Currently, futures exchanges have many crippling
+ﬂaws holding the space back. Our mission is to solve these problems and move
+the derivatives space toward becoming institutional grade. We launched FTX
+in April and already have among the world’s most liquid orderbooks. FTX
+futures have traded more than $100m per day recently, and FTX OTC has
+tradedanother$30m. OurgoalistobecomeasproﬁtableasBitmexandOKEx
+withinayear. Thisisnotaneasyfeat,butwe’vereceivedoverwhelmingsupport
+from top industry players who have reaﬃrmed the demand for a well designed
+derivatives exchange. We want to scale up as quickly as possible and build a
+community of strong supporters, and so we are conducting a token raise for
+people who want to help grow FTX.
+2 Why Invest? – All-Star Team
+FTX was built with a lot of features to diﬀerentiate us from our competitors,
+but its greatest strength lies in the team behind it. We are conﬁdent that
+FTX has massive potential to rise to the top because we have proven time and
+time again our ability to enter a crowded market, disrupt the status quo and
+become one of the dominant players. We have consistently demonstrated our
+ability to innovate, execute and grow rapidly. These qualities have served us
+wellinhelpingusstayonestepaheadofthecompetition. Thereisanenormous
+untapped potential in the derivatives market, and we are excited to repeat our
+success with FTX. We’d be ecstatic for investors and supporters to join us on
+this journey.
+3 Track Record of Proven Success
+3.1 Team Background
+WecomefromleadingWallStreetquantfundsandtechcompanies: JaneStreet,
+Optiver,Susquehanna,FacebookandGoogle. Thetraditionalsecondarymarket
+isourbreadandbutter. Wehavebackgroundsinequityderivativestrading; we
+understand both how derivatives are traditionally designed, and what deriva-
+tives there is market demand for.
+3.2 Alameda Research
+FTX is backed by Alameda Research, a $100million AUM quantitative cryp-
+tocurrency trading ﬁrm. Within a year, Alameda Research became the largest
+liquidity provider and market maker in the space. Alameda trades $600 million
+to 1 billion a day, accounts for roughly 5% of global volume and is ranked 2nd
+on the BitMEX leaderboard.
+4
+3.3 OTC
+In2018welaunchedanautomatedOTCRFQsystem. Inspiteofthebearmar-
+ket and competitive OTC landscape, we were able to quickly scale our volume
+to $30million per day without much marketing. Because we were able to oﬀer
+some of the tightest spreads in the industry with fast settlement and no fees,
+we grew by word of mouth and became a source of liquidity for well known
+OTC desks and exchanges. We also built a world class portal, with an intuitive
+UI and API, and an easy to use settlement system. We expect our volumes
+to grow substantially when we start our marketing eﬀorts. The OTC portal
+has been integrated into the FTX ecosystem, driving our OTC counterparties
+toward FTX.
+4 FTX Features
+4.1 History
+Over the past 1.5 years, we have been one of the largest traders in the futures
+market. Weranintomanyproblemswithcurrentfuturesexchangesthatwebe-
+lievearepreventingthespacefrombecomingsuﬃcientlymatureforinstitutions
+to trade in. Hoping to improve the ecosystem, we’ve written countless white
+papers and given hours of feedback to these exchanges, but to no avail. Finally,
+we decided to take matters into our own hands and built FTX.
+4.2 Features
+4.2.1 Preventing Clawbacks
+Current futures exchanges have frequent large clawbacks leading to losses in
+the millions of dollars due to poorly designed risk management systems. FTX
+signiﬁcantly reduces the likelihood of clawbacks from ever occurring by using a
+three-tiered liquidation model.
+1. Weﬁrstclosepositionsdowncarefullywithrate-limitedliquidationorders
+in the market.
+2. We have a unique backstop liquidity provider program which jumps in to
+provide to accounts in danger of bankruptcy.
+3. We leverage the insurance fund to prevent customer losses.
+See here for a detailed explanation.
+4.2.2 CentralizedCollateralPool+UniversalStablecoinSettlement
+With existing futures exchanges, collateral is required to be posted in separate
+margin accounts for diﬀerent products (e.g. spot margin trading, futures and
+etc).
+5
+Additionally, the type of collateral required diﬀers depending on what con-
+tract is being traded (e.g. Ripple perpetual swaps require XRP to be posted
+as collateral), resulting in capital being fractured across many diﬀerent tokens.
+This makes it cumbersome to rebalance positions (e.g. having to liquidate an-
+other token to top up an XRP margin account). And in the case of short po-
+sitions, this system is particularly counterintuitive since traders must purchase
+the very token they are intending to short.
+Instead of posting collateral in multiple accounts and tokens, FTX uses a
+system similar to mature traditional futures markets today, whereby traders
+post collateral in a single currency.
+FTX derivatives are stablecoin settled and share collateral in one universal
+margin wallet. This means that traders can deposit stablecoins as collateral for
+allderivativeproducts,andtheirPNLissettledinstablecoins. Stablecoinsallow
+traders to get legitimate USD-based price exposure and settlement, without
+needing a bank account. Using the same base currency as collateral for all of
+the contracts also makes it easier to shift positions around.
+Side note: However, not allstablecoins are eligible. Inorder for a stablecoin
+to be eligible for usage on the FTX platform, it must have proven itself to have
+a smooth redemption process and consistently trade close to par. Currently,
+USDC and TUSD are the stablecoins that best ﬁt those requirements.
+4.2.3 Non-inverted futures
+FTXfuturesarestandard,ratherthaninverted. Thismeansthattheyaretruley
+BTC/USDfuturesandnotUSD/BTCfutures. Thusauser’sUSDPnLissimply
+(numberofBTCcontracts)*(changeinprice),theorderbookstraightforwardly
+displaysanumberofBTCfutures,andthatclosingapositionjustmeansselling
+oﬀ the number of BTC contracts you own.
+4.2.4 Innovative New Product: Leveraged Tokens
+Currently, there doesn’t exist a way to short or put on leveraged positions on
+many spot exchanges. Traders have to trade on margin or futures exchanges
+likeBitﬁnex,OkexandBitmex. Thiscanbemorecomplicatedforretailtraders
+because they need to deal with funding rates, borrowing costs, and constantly
+have to monitor their positions to avoid being margin called. Not only that,
+traders are also exposed to the risk of losing signiﬁcant funds, especially given
+high-proﬁle failures of liquidity we’ve seen on futures exchanges recently.
+Leveraged Tokens allow traders to take short or leveraged positions without
+having to trade on margin or futures exchanges. Say a trader wants to 3x short
+bitcoin. They can simply buy a 3x short bitcoin leveraged token on FTX. This
+process is as easy as buying BTC or ETH on a spot exchange. We oﬀer 3x, -1x
+and-3xleveragedtokensforBTC,ETH, XRP,EOS,USDT,BNB,TRX,LEO,
+and BCH, and looking to add more in the future. With these tokens, traders
+6
+can put on leveraged tokens in a more capital eﬃcient way, requiring none of
+their assets to be stored in a margin wallet.
+Leveraged Tokens are ERC20, which means they can also be listed on other
+spot exchanges. This enables spot exchanges to oﬀer inverse price action and
+leverage positions to their customers without needing to implement their own
+margin trading and liquidation engine.
+See here for whitepaper and here for a detailed FAQ.
+4.2.5 OTC portal
+FTX has an embedded OTC portal, powered by Alameda Research. Users can
+buyandsellcoinswiththeclickofabutton,accessingAlameda’sdeepliquidity
+poolwithnofees. Usersarealreadytrading$30m+perdayontheOTCportal.
+5 Why FTX is Uniquely Good and Hard to Repli-
+cate
+FTXisbackedbyAlamedaResearch, athoughtleaderandthelargestliquidity
+provider in the secondary markets. This means:
+5.1 Live Product
+Unlikemanyexchangesandprojectswhoareissuingatokenraise,ourexchange
+is already live and actually functional.
+5.2 Liquidity
+FTX is very liquid. It’s already more liquid than every other futures exchange
+in crypto; only the BitMEX BTC perpetual futures are more liquid than FTX.
+This is really hard to replicate. No new exchanges will be able to, and those
+around for 5 years have only succeeded it doing it for a single contract.
+5.3 Domain Expertise
+FTX was designed by people who really know the products. Everything from
+collateral to maintenance margin to liquidation process to product oﬀering was
+redesigned from the ground up by the heaviest user of the products.
+The liquidation process in particular is very tricky and crucial to get right–
+see OKEx’s clawbacks–and Alameda has spent thousands of hours understand-
+ingexactlyhowtheseworkandhowtheycouldbealteredtopreventliquidations
+and clawbacks.
+FTX’s liquidation process is the best in the class and makes heavy use of
+Alameda’s backing as a backstop market maker–though others are encouraged
+to become a backstop as well!
+7
+5.4 Pioneering New Products
+We are the ﬁrst exchange to oﬀer USDT futures. USDT futures are game
+changers; there are lots of large crypto ﬁrms who desperately need some way
+to hedge USDT deltas given the historic volatility of Tether. We estimate that
+there is a demand for something like00m/day of USDT hedging and right now
+there’s basically no alternative.
+The counterparts to Leveraged Tokens in traditional markets are extremely
+popular. In crypto, this market is completely unexplored. Product design and
+management for leveraged tokens is tricky but it oﬀers traders and exchanges a
+huge opportunity.
+We foresee many of the current futures exchanges eventually switching to
+a stablecoin settlement design. Using stablecoins as collateral vastly simpliﬁes
+the user experience, and also substantially decreases margin requirements and
+trading costs.
+5.5 Strong Network and Reputation
+Alameda plays an integral role in the crypto secondary markets. Because of
+this, Alameda has very strong relationships with existing desks and exchanges
+(Binance, Okex, Huobi, Circle, Trust Token and etc), and can leverage this to
+formvaluablepartnerships. Italreadyhaspartnershipoﬀersfrommultiplelarge
+crypto institutions and exchanges.
+5.6 Fast Development Cycle
+FTX can leverage Alameda’s tech team–an experienced, battle-tested group
+used to building complex crypto-trading systems under time pressure. This
+means that our development cycle is much shorter than others; we can roll out
+multiple large features per day.
+Many of these things rely on Alameda’s expertise, and that is very hard to
+replicate elsewhere.
+6 Revenue Model
+6.1 Exchange Fees
+Maker and taker fees are 2bps and 7bps. To become a VIP, an account must
+trade over a certain volume and/or hold a certain number of FTT.
+6.2 Leveraged Token Fees
+Creation and redemptions fees are 10bps. Daily management fees are 3bps.
+8
+6.3 Other Fees
+There will be a diﬀerent fee structures for new FTX products like options, spot
+exchange, and margin trading.
+6.4 Exemptions
+There are no fees for deposit, withdrawal or futures settlement.
+6.5 OTC
+TheOTCportalonFTXtradestensofmillionsofdollarsperdayandisquickly
+growing.
+7 Strategies to Acquire Users and Grow Volume
+7.1 Conventional PR/Marketing
+For many new futures exchanges, the plan to acquire users and drive volume is
+typically a combination of the following:
+• Release PR articles on traditional and established crypto news outlets for
+English, Chinese and Korean audiences.
+• Employ inﬂuencers from social apps like Twitter, Reddit, Bitcointalk,
+Wechat, Kakaotalk, Telegram, Youtube, Medium, etc
+• Community Management
+• AMA, interviews, ‘ICO reviews’
+• Aﬃliate programs
+• Aﬃliate marketing and SEO
+• Hosting meetups
+• Bounty programs and Smart airdrops
+• Trading competitions
+FTX will employ a combination of the above to aggressively expand our brand.
+While many new futures exchanges are limited to the conventional strategies
+listed above, FTX has access to other methods to acquire users and increase
+volumes eﬀectively:
+9
+7.2 FTX OTC - One of the Tightest Spreads in the In-
+dustry
+Without much marketing, our OTC volumes has been growing quickly. Our
+OTC desk is recommended by top crypto institutions and exchanges by word
+of mouth. With more marketing eﬀorts, we are conﬁdent that the number of
+counterparties, largecryptoinstitutions, tradingﬁrmsandwhales, willincrease
+exponentially.
+We’veintegratedourOTCportalintoFTX,givingallofourOTCcounterparties
+easyaccesstoderivatives. WeestimatethatourexistingOTCuserbaseaccount
+for something like $350m/day of futures volume. We think we have a pretty
+good shot at getting at least$75m/day of that.
+7.3 FTX OTC - Stablecoin Fiat Gateway
+WehavestrongrelationshipswiththeteambehindTUSDandUSDC.Through
+FTX OTC, our counterparties will be able to exchange between USD and
+TUSD/USDC at size. This is another reason why people will sign up for FTX.
+7.4 Partnerships
+We have brought on TUSD and USDC to become our stablecoin partners. We
+areontracktobringingonmorestrategicpartnersgivenourstrongconnections
+key players in the crypto primary and secondary market.
+7.5 Listing New Leveraged Tokens on FTX
+Wewillbereachingouttoprojectswithhugecommunitiestolisttheirleveraged
+tokens. For example 10x bnb or tron leveraged tokens.
+7.6 Listing Leveraged Tokens on Other Exchanges
+We expect leveraged tokens to be listed on other venues within the next month
+of two. Leveraged tokens achieved their target exposure by buying and selling
+futures on FTX. Increasing leveraged tokens volume will also increase FTX
+futures volume. The BTC leveraged tokens are already listed on FTX and
+ZBG.
+7.7 Future Initiatives
+In the future we are planning to add options, exchange traded tokens, lending,
+and spot margin trading to FTX.
+10
+8 Token Utility
+FTT is the backbone of the FTX ecosystem. We have carefully designed incen-
+tive schemes to increase network eﬀects and demand for FTT, and to decrease
+its circulating supply.
+8.1 Increasing FTT Utility
+8.1.1 Token Burn
+Approximately one third of all fees generated on FTX will be used for an FTT
+repurchase, for information please click here. Any FTT bought this way will be
+burned
+8.1.2 Collateral
+FTT can be used as collateral for futures positions. This increases utility and
+demand for FTT. The same applies when we launch margin trading in the
+future.
+8.1.3 Discount on Trading Fees
+Customers who hold a certain amount of FTT for a period of time will receive
+lower FTX futures fees. This will further increase demand for FTT. More
+information please click here.
+8.1.4 OTC Rebates
+Customers who hold enough FTT will receive rebates from all of their OTC
+trading on FTX.
+8.1.5 OTC Burn
+There will be a repurchase and burning of FTT based on OTC volumes and
+revenue from the FTX OTC portal, powered by Alameda Research.
+8.1.6 Socialized Gains
+We’veperformedbacktestsandlivesimulationstoseehowFTXwillfareduring
+large market movements. While other futures exchanges suﬀered from claw-
+backs, FTX managed to net increase their insurance fund by a sizeable amount
+thanks to its unique backstop liquidity provider program. For instance, during
+a recent market move, Okex incurred $3 million of clawbacks. Meanwhile, our
+demosimulationwhichmirroredpositionsonOKExdemonstratednoclawbacks
+and a net gain of a million to our insurance fund.
+We are conﬁdent in FTX’s ability to handle endangered accounts and will re-
+distribute a portion of net insurance fund gains to FTT holders.
+11
+8.1.7 White Label Solutions
+Several crypto institutions have expressed strong interest in purchasing a white
+label version of our OTC portal and futures exchange. We foresee that this
+trend will continue when we release other derivatives products like options.
+These white label solutions can be purchased in FTT.
+8.1.8 Future Expansion
+FTT is the backbone of the FTX ecosystem. There are many ways FTT will
+be used as we add more products and features to FTX. For instance, when we
+launch a spot exchange in the future, FTT will be used for initial exchange
+oﬀerings.
+9 Growth Potential
+The top futures exchanges right now (BitMEX, OKEx, and Bitﬂyer) charge
+roughly5bps/tradeonroughly$5bperdayofvolume,makingroughly$600m/year
+in revenue. That includes a moderately well designed product with a large
+existing userbase but no marketing, and two poorly designed ones with large
+userbases and substantial outreach.
+ThesecondtierinvolvesexchangeslikeDeribit,whichhasadecentbutunimagi-
+nativeproduct,nomarketing,nouserbase,andlittleliquidity;ittradesabout$300m/day
+and makes about$100m/year in fees.
+We think that FTX will be the most well thought out product among these;
+in the top tier of liquidity; have more appealing products; have built in ﬂow
+from large institutional counterparties of ours; and have substantial room to
+innovate and grow over time. On the other hand it currently does not have a
+large built-in retail user base or marketing.
+FTX has only existed for two months and it is already trading over$100m/day,
+putting it in the second tier of derivatives exchanges.
+10 Estimated FTX Volume
+We are planning to get initial FTX volume from the following sources:
+10.1 OTC
+Alameda Research trades about $30m/day OTC through its RFQ Portal. We
+have recently integrated the portal into FTX so that all of our counterparties
+have automatic access for FTX futures markets. Our counterparties trade hun-
+dreds of millions of dollars per day of futures, and so we are optimistic that
+we will be able to generate at least $50m/day of FTX volume through our
+counterparites.
+12
+10.1.1 Crypto Trading Firms
+FTX oﬀers a lot of features that high volume crypto traders have been asking
+for: stablecoin settlement, portfolio margin, and a way to hedge USDT risk.
+We are reaching out to all of the major crypto trading ﬁrms, and have been
+getting very positive feedback and begun onboarding clients. We are hoping to
+get $50m/day of volume from this initial batch of ﬁrms.
+10.1.2 Leveraged Tokens
+Wehavebeenin discussions withspotcrypto exchanges about listingleveraged
+tokens. We believe that at least some will have listed leveraged tokens within
+the next month or two, giving their users easy access to FTX’s futures. We
+believe this will get at least $10m/day of FTX volume.
+10.1.3 OTC Growth
+We are reaching out to more and more ﬁrms about our OTC trading and on-
+boarding them to the FTX portal. We hope to double our OTC volumes in the
+next few months and similarly add another $25m/day of FTX volume through
+the new clients.
+Because of these we are optimistic that $250m/day of volume represents a ﬂoor
+for the exchange, with $5b/day a real possibility. We are also optimistic that
+theinitialgrowthinFTXvolumewillquicklyencouragemostofthetopvolume
+futures traders to onboard with the platform and see for themselves what the
+major advantages of our futures are.
+11 In Closing
+SofarFTXhasbeenoﬀeredexclusivepartnershipsandacquisitioninterestfrom
+various crypto institutions. We have turned down these opportunities because
+we strongly believe in our ability to make FTX a success. We are excited for
+you to join us on our journey to becoming a leading derivatives exchange. We
+are also looking to partner with strategic advisors and investors.
+13

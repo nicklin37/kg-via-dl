@@ -1,0 +1,455 @@
+Uniswap v2 Core
+Hayden Adams Noah Zinsmeister Dan Robinson
+hayden@uniswap.org noah@uniswap.org dan@paradigm.xyz
+March 2020
+Abstract
+ThistechnicalwhitepaperexplainssomeofthedesigndecisionsbehindtheUniswap
+v2 core contracts. It covers the contracts’ new features—including arbitrary pairs
+between ERC20s, a hardened price oracle that allows other contracts to estimate the
+time-weighted average price over a given interval, “ﬂash swaps” that allow traders to
+receive assets and use them elsewhere before paying for them later in the transaction,
+andaprotocolfeethatcanbeturnedoninthefuture. Italsore-architectsthecontracts
+toreducetheirattacksurface. ThiswhitepaperdescribesthemechanicsofUniswapv2’s
+“core”contractsincludingthepaircontractthatstoresliquidityproviders’funds—and
+the factory contract used to instantiate pair contracts.
+1 Introduction
+Uniswapv1isanon-chainsystemofsmartcontractsontheEthereumblockchain,imple-
+menting an automated liquidity protocol based on a “constant product formula” [1]. Each
+Uniswap v1 pair stores pooled reserves of two assets, and provides liquidity for those two
+assets, maintaining the invariant that the product of the reserves cannot decrease. Traders
+pay a 30-basis-point fee on trades, which goes to liquidity providers. The contracts are
+non-upgradeable.
+Uniswapv2isanewimplementationbasedonthesameformula,withseveralnewhighly-
+desirable features. Most signiﬁcantly, it enables the creation of arbitrary ERC20/ERC20
+pairs, rather than supporting only pairs between ERC20 and ETH. It also provides a hard-
+ened price oracle that accumulates the relative price of the two assets at the beginning of
+eachblock. ThisallowsothercontractsonEthereumtoestimatethetime-weightedaverage
+priceforthetwoassetsoverarbitraryintervals. Finally,itenables“ﬂashswaps”whereusers
+canreceiveassetsfreelyandusethemelsewhereonthechain,onlypayingfor(orreturning)
+those assets at the end of the transaction.
+While the contract is not generally upgradeable, there is a private key that has the
+ability to update a variable on the factory contract to turn on an on-chain 5-basis-point fee
+on trades. This fee will initially be turned oﬀ, but could be turned on in the future, after
+which liquidity providers would earn 25 basis points on every trade, rather than 30 basis
+points.
+As discussed in section 3, Uniswap v2 also ﬁxes some minor issues with Uniswap v1, as
+well as rearchitecting the implementation, reducing Uniswap’s attack surface and making
+the system more easily upgradeable by minimizing the logic in the “core” contract that
+holds liquidity providers’ funds.
+1
+This paper describes the mechanics of that core contract, as well as the factory contract
+used to instantiate those contracts. Actually using Uniswap v2 will require calling the
+pair contract through a “router” contract that computes the trade or deposit amount and
+transfers funds to the pair contract.
+2 New features
+2.1 ERC-20 pairs
+Uniswap v1 used ETH as a bridge currency. Every pair included ETH as one of its
+assets. This makes routing simpler—every trade between ABC and XYZ goes through the
+ETH/ABC pair and the ETH/XYZ pair—and reduces fragmentation of liquidity.
+However,thisruleimposessigniﬁcantcostsonliquidityproviders. Allliquidityproviders
+have exposure to ETH, and suﬀer impermanent loss based on changes in the prices of other
+assets relative to ETH. When two assets ABC and XYZ are correlated—for example, if
+they are both USD stablecoins—liquidity providers on a Uniswap pair ABC/XYZ would
+generally be subject to less impermanent loss than the ABC/ETH or XYZ/ETH pairs.
+Using ETH as a mandatory bridge currency also imposes costs on traders. Traders have
+to pay twice as much in fees as they would on a direct ABC/XYZ pair, and they suﬀer
+slippage twice.
+Uniswap v2 allows liquidity providers to create pair contracts for any two ERC-20s.
+AproliferationofpairsbetweenarbitraryERC-20scouldmakeitsomewhatmorediﬃcult
+toﬁndthebestpathtotradeaparticularpair,butroutingcanbehandledatahigherlayer
+(either oﬀ-chain or through an on-chain router or aggregator).
+2.2 Price oracle
+The marginal price oﬀered by Uniswap (not including fees) at time t can be computed
+by dividing the reserves of asset a by the reserves of asset b.
+ra
+p = t (1)
+t rb
+t
+SincearbitrageurswilltradewithUniswapifthispriceisincorrect(byasuﬃcientamount
+tomakeupforthefee),thepriceoﬀeredbyUniswaptendstotracktherelativemarketprice
+of the assets, as shown by Angeris et al [2]. This means it can be used as an approximate
+price oracle.
+However, Uniswap v1 is not safe to use as an on-chain price oracle, because it is very
+easy to manipulate. Suppose some other contract uses the current ETH-DAI price to settle
+a derivative. An attacker who wishes to manipulate the measured price can buy ETH from
+the ETH-DAI pair, trigger settlement on the derivative contract (causing it to settle based
+ontheinﬂatedprice),andthensellETHbacktothepairtotradeitbacktothetrueprice.1
+This might even be done as an atomic transaction, or by a miner who controls the ordering
+of transactions within a block.
+Uniswap v2 improves this oracle functionality by measuring and recording the price
+before the ﬁrst trade of each block (or equivalently, after the last trade of the previous
+1Forareal-worldexampleofhowusingUniswapv1asanoraclecanmakeacontractvulnerabletosuch
+anattack,see[3].
+2
+block). Thispriceismorediﬃculttomanipulatethanpricesduringablock. Iftheattacker
+submits a transaction that attempts to manipulate the price at the end of a block, some
+other arbitrageur may be able to submit another transaction to trade back immediately
+afterward in the same block. A miner (or an attacker who uses enough gas to ﬁll an entire
+block)couldmanipulatethepriceattheendofablock,butunlesstheyminethenextblock
+as well, they may not have a particular advantage in arbitraging the trade back.
+Speciﬁcally, Uniswap v2 accumulates this price, by keeping track of the cumulative sum
+of prices at the beginning of each block in which someone interacts with the contract. Each
+price is weighted by the amount of time that has passed since the last block in which it was
+updated,accordingtotheblocktimestamp.2 Thismeansthattheaccumulatorvalueatany
+given time (after being updated) should be the sum of the spot price at each second in the
+history of the contract.
+t
+(cid:88)
+a = p (2)
+t i
+i=1
+To estimate the time-weighted average price from time t to t , an external caller can
+1 2
+checkpoint the accumulator’s value at t and then again at t , subtract the ﬁrst value from
+1 2
+thesecond,anddividebythenumberofsecondselapsed. (Notethatthecontractitselfdoes
+not store historical values for this accumulator—the caller has to call the contract at the
+beginning of the period to read and store this value.)
+p = (cid:80)ti=2t1pi = (cid:80)ti=21pi−(cid:80)ti=11pi = at2 −at1 (3)
+t1,t2 t −t t −t t −t
+2 1 2 1 2 1
+Users of the oracle can choose when to start and end this period. Choosing a longer
+periodmakesitmoreexpensiveforanattackertomanipulatetheTWAP,althoughitresults
+in a less up-to-date price.
+One complication: should we measure the price of asset A in terms of asset B, or the
+price of asset B in terms of asset A? While the spot price of A in terms of B is always the
+reciprocalofthespotpriceofBintermsofA,themeanpriceofassetAintermsofassetB
+overaparticularperiodoftimeisnot equaltothereciprocalofthemeanpriceofassetBin
+terms of asset A.3 For example, if the USD/ETH price is 100 in block 1 and 300 in block 2,
+the average USD/ETH price will be 200 USD/ETH, but the average ETH/USD price will
+be 1/150 ETH/USD. Since the contract cannot know which of the two assets users would
+want to use as the unit of account, Uniswap v2 tracks both prices.
+Another complication is that it is possible for someone to send assets to the pair con-
+tract—and thus change its balances and marginal price—without interacting with it, and
+thus without triggering an oracle update. If the contract simply checked its own balances
+and updated the oracle based on the current price, an attacker could manipulate the oracle
+by sending an asset to the contract immediately before calling it for the ﬁrst time in a
+block. If the last trade was in a block whose timestamp was X seconds ago, the contract
+would incorrectly multiply the new price by X before accumulating it, even though nobody
+2Since miners have some freedom to set the block timestamp, users of the oracle should be aware that
+thesevaluesmaynotcorrespondpreciselytoreal-worldtimes.
+3ThearithmeticmeanpriceofassetAintermsofassetBoveragivenperiodisequaltothereciprocal
+of the harmonic mean price of asset B in terms of asset A over that period. If the contract measured the
+geometric meanprice,thenthepriceswouldbethereciprocalsofeachother. However,thegeometricmean
+TWAPislesscommonlyused,andisdiﬃculttocomputeonEthereum.
+3
+has had an opportunity to trade at that price. To prevent this, the core contract caches
+its reserves after each interaction, and updates the oracle using the price derived from the
+cached reserves rather than the current reserves. In addition to protecting the oracle from
+manipulation, this change enables the contract re-architecture described below in section
+3.2.
+2.2.1 Precision
+Because Solidity does not have ﬁrst-class support for non-integer numeric data types,
+the Uniswap v2 uses a simple binary ﬁxed point format to encode and manipulate prices.
+Speciﬁcally, prices at a given moment are stored as UQ112.112 numbers, meaning that 112
+fractional bits of precision are speciﬁed on either side of the decimal point, with no sign.
+These numbers have a range of [0, 2112−1]4 and a precision of 1 .
+2112
+TheUQ112.112formatwaschosenforapragmaticreason—becausethesenumberscan
+be stored in a uint224, this leaves 32 bits of a 256 bit storage slot free. It also happens that
+thereserves,eachstoredinauint112,alsoleave32bitsfreeina(packed)256bitstorageslot.
+These free spaces are used for the accumulation process described above. Speciﬁcally, the
+reservesarestoredalongsidethetimestampofthemostrecentblockwithatleastonetrade,
+modded with 232 so that it ﬁts into 32 bits. Additionally, although the price at any given
+moment (stored as a UQ112.112 number) is guaranteed to ﬁt in 224 bits, the accumulation
+of this price over an interval is not. The extra 32 bits on the end of the storage slots for the
+accumulated price of A/B and B/A are used to store overﬂow bits resulting from repeated
+summationsofprices. Thisdesignmeansthatthepriceoracleonlyaddsanadditionalthree
+SSTORE operations (a current cost of about 15,000 gas) to the ﬁrst trade in each block.
+The primary downside is that 32 bits isn’t quite enough to store timestamp values that
+willreasonablyneveroverﬂow. Infact,thedatewhentheUnixtimestampoverﬂowsauint32
+is 02/07/2106. To ensure that this system continues to function properly after this date,
+and every multiple of 232−1 seconds thereafter, oracles are simply required to check prices
+at least once per interval (approximately 136 years). This is because the core method of
+accumulation (and modding of timestamp), is actually overﬂow-safe, meaning that trades
+acrossoverﬂowintervalscanbeappropriatelyaccountedforgiventhatoraclesareusingthe
+proper (simple) overﬂow arithmetic to compute deltas.
+2.3 Flash Swaps
+InUniswapv1,auserpurchasingABCwithXYZneedstosendtheXYZtothecontract
+before they could receive the ABC. This is inconvenient if that user needs the ABC they
+are buying in order to obtain the XYZ they are paying with. For example, the user might
+be using that ABC to purchase XYZ in some other contract in order to arbitrage a price
+diﬀerence from Uniswap, or they could be unwinding a position on Maker or Compound by
+selling the collateral to repay Uniswap.
+Uniswapv2addsanewfeaturethatallowsausertoreceiveanduseanassetbefore paying
+for it, as long as they make the payment within the same atomic transaction. The swap
+function makes a call to an optional user-speciﬁed callback contract in between transferring
+out the tokens requested by the user and enforcing the invariant. Once the callback is
+complete, the contract checks the new balances and conﬁrms that the invariant is satisﬁed
+4Thetheoreticalupperboundof2112−( 1 )doesnotapplyinthissetting,asUQ112.112numbersin
+2112
+Uniswaparealwaysgeneratedfromtheratiooftwouint112s. Thelargestsuchratiois 2112−1 =2112−1.
+1
+4
+(after adjusting for fees on the amounts paid in). If the contract does not have suﬃcient
+funds, it reverts the entire transaction.
+A user can also repay the Uniswap pool using the same token, rather than completing
+the swap. This is eﬀectively the same as letting anyone ﬂash-borrow any of assets stored in
+a Uniswap pool (for the same 0.30% fee as Uniswap charges for trading).5
+2.4 Protocol fee
+Uniswap v2 includes a 0.05% protocol fee that can be turned on and oﬀ. If turned on,
+this fee would be sent to a feeTo address speciﬁed in the factory contract.
+Initially,feeToisnotset,andnofeeiscollected. Apre-speciﬁedaddress—feeToSetter—can
+call the setFeeTo function on the Uniswap v2 factory contract, setting feeTo to a diﬀerent
+value. feeToSetter can also call the setFeeToSetter to change the feeToSetter address
+itself.
+If the feeTo address is set, the protocol will begin charging a 5-basis-point fee, which is
+takenasa 1 cutofthe30-basis-pointfeesearnedbyliquidityproviders. Thatis,traderswill
+6
+continue to pay a 0.30% fee on all trades; 83.3% of that fee (0.25% of the amount traded)
+will go to liquidity providers, and 16.6% of that fee (0.05% of the amount traded) will go to
+the feeTo address.
+Collectingthis0.05%feeatthetimeofthetradewouldimposeanadditionalgascoston
+every trade. To avoid this, accumulated fees are collected only when liquidity is deposited
+orwithdrawn. Thecontractcomputestheaccumulatedfees,andmintsnewliquiditytokens
+to the fee beneﬁciary, immediately before any tokens are minted or burned.
+√ √
+Thetotalcollectedfeescanbecomputedbymeasuringthegrowthin k(thatis, x·y)
+sincethelasttimefeeswerecollected.6 Thisformulagivesyoutheaccumulatedfeesbetween
+t and t as a percentage of the liquidity in the pool at t :
+1 2 2
+√
+k
+f =1− √ 1 (4)
+1,2
+k
+2
+If the fee was activated before t , the feeTo address should capture 1 of fees that were
+1 6
+accumulated between t and t . Therefore, we want to mint new liquidity tokens to the
+1 2
+feeTo address that represent φ·f of the pool, where φ is 1.
+1,2 6
+That is, we want to choose s to satisfy the following relationship, where s is the total
+m 1
+quantity of outstanding shares at time t :
+1
+s
+m =φ·f (5)
+s +s 1,2
+m 1
+√
+After some manipulation, including substituting 1− √kk12 for f1,2 and solving for sm, we
+can rewrite this as:
+√ √
+k − k
+s = 2√ 1√ ·s (6)
+m (1 −1)· k + k 1
+φ 2 1
+Setting φ to 1 gives us the following formula:
+6
+5Because Uniswap charges fees on input amounts, the fee relative to the withdrawn amount is actually
+slightlyhigher: 1 −1= 3 ≈0.3009203%.
+1−0.003 997
+6We can use this invariant, which does not account for liquidity tokens that were minted or burned,
+becauseweknowthatfeesarecollectedeverytimeliquidityisdepositedorwithdrawn.
+5
+√ √
+k − k
+s = √2 √1 ·s (7)
+m 1
+5· k + k
+2 1
+Suppose the initial depositor puts 100 DAI and 1 ETH into a pair, receiving 10 shares.
+Sometimelater(withoutanyotherdepositorhavingparticipatedinthatpair),theyattempt
+to withdraw it, at a time when the pair has 96 DAI and 1.5 ETH. Plugging those values
+into the above formula gives us the following:
+√ √
+1.5·96− 1·100
+s = √ √ ·10≈0.0286 (8)
+m
+5· 1.5·96+ 1·100
+2.5 Meta transactions for pool shares
+PoolsharesmintedbyUniswapv2pairsnativelysupportmetatransactions. Thismeans
+userscanauthorizeatransferoftheirpoolshareswithasignature7,ratherthananon-chain
+transaction from their address. Anyone can submit this signature on the user’s behalf by
+calling the permit function, paying gas fees and possibly performing other actions in the
+same transaction.
+3 Other changes
+3.1 Solidity
+Uniswapv1isimplementedinVyper,aPython-likesmartcontractlanguage. Uniswapv2
+isimplementedinthemorewidely-usedSolidity,sinceitrequiressomecapabilitiesthatwere
+notyetavailableinVyper(suchastheabilitytointerpretthereturnvaluesofnon-standard
+ERC-20 tokens, as well as access to new opcodes such as chainid via inline assembly) at
+the time it was being developed.
+3.2 Contract re-architecture
+One design priority for Uniswap v2 is to minimize the surface area and complexity of
+thecorepaircontract—thecontractthatstoresliquidityproviders’assets. Anybugsinthis
+contract could be disastrous, since millions of dollars of liquidity might be stolen or frozen.
+When evaluating the security of this core contract, the most important question is
+whetheritprotectsliquidity providers fromhavingtheirassetsstolenorlocked. Anyfeature
+that is meant to support or protect traders—other than the basic functionality of allowing
+one asset in the pool to be swapped for another—can be handled in a “router” contract.
+In fact, even part of the swap functionality can be pulled out into the router contract.
+As mentioned above, Uniswap v2 stores the last recorded balance of each asset (in order to
+prevent a particular manipulative exploit of the oracle mechanism). The new architecture
+takes advantage of this to further simplify the Uniswap v1 contract.
+In Uniswap v2, the seller sends the asset to the core contract before calling the swap
+function. Then, the contract measures how much of the asset it has received, by comparing
+the last recorded balance to its current balance. This means the core contract is agnostic
+7The signed message conforms to the EIP-712 standard, the same one used by meta transactions for
+tokenslikeCHAIandDAI.
+6
+to the way in which the trader transfers the asset. Instead of transferFrom, it could be a
+meta transaction, or any other future mechanism for authorizing the transfer of ERC-20s.
+3.2.1 Adjustment for fee
+Uniswap v1’s trading fee is applied by reducing the amount paid into the contract by
+0.3% before enforcing the constant-product invariant. The contract implicitly enforces the
+following formula:
+(x −0.003·x ))·y >=x ·y (9)
+1 in 1 0 0
+With ﬂash swaps, Uniswap v2 introduces the possibility that x and y might both
+in in
+be non-zero (when a user wants to pay the pair back using the same asset, rather than
+swapping). To handle such cases while properly applying fees, the contract is written to
+enforce the following invariant:8
+(x −0.003·x )·(y −0.003·y )>=x ·y (10)
+1 in 1 in 0 0
+To simplify this calculation on-chain, we can multiply each side of the inequality by
+1,000,000:
+(1000·x −3·x )·(1000·y −3·y )>=1000000·x ·y (11)
+1 in 1 in 0 0
+3.2.2 sync() and skim()
+To protect against bespoke token implementations that can update the pair contract’s
+balance, and to more gracefully handle tokens whose total supply can be greater than 2112,
+Uniswap v2 has two bail-out functions: sync()and skim().
+sync() functions as a recovery mechanism in the case that a token asynchronously
+deﬂates the balance of a pair. In this case, trades will receive sub-optimal rates, and if no
+liquidity provider is willing to rectify the situation, the pair is stuck. sync() exists to set
+thereservesofthecontracttothecurrentbalances,providingasomewhatgracefulrecovery
+from this situation.
+skim() functions as a recovery mechanism in case enough tokens are sent to an pair to
+overﬂow the two uint112 storage slots for reserves, which could otherwise cause trades to
+fail. skim() allows a user to withdraw the diﬀerence between the current balance of the
+pair and 2112−1 to the caller, if that diﬀerence is greater than 0.
+3.3 Handling non-standard and unusual tokens
+The ERC-20 standard requires that transfer() and transferFrom() return a boolean in-
+dicating the success or failure of the call [4]. The implementations of one or both of these
+functions on some tokens—including popular ones like Tether (USDT) and Binance Coin
+(BNB)—instead have no return value. Uniswap v1 interprets the missing return value of
+these improperly deﬁned functions as false—that is, as an indication that the transfer was
+not successful—and reverts the transaction, causing the attempted transfer to fail.
+8Note that using the new architecture, xin is not provided by the user; instead, it is calculated by
+measuringthecontract’sbalanceafterthecallback,x1,andsubtracting(x0 -xout)fromit. Thislogicdoes
+not distinguish between assets sent into the contract before it is called and assets sent into the contract
+duringthecallback. yin iscomputedinthesameway,basedony0,y1,andyout.
+7
+Uniswapv2handlesnon-standardimplementationsdiﬀerently. Speciﬁcally,ifatransfer()
+call9 hasnoreturnvalue,Uniswapv2interpretsitasasuccessratherthanasafailure. This
+changeshouldnotaﬀectanyERC-20tokensthatconformtothestandard(becauseinthose
+tokens, transfer() always has a return value).
+Uniswapv1alsomakestheassumptionthatcallstotransfer()andtransferFrom()cannot
+triggerareentrantcalltotheUniswappaircontract. Thisassumptionisviolatedbycertain
+ERC-20 tokens, including ones that support ERC-777’s “hooks” [5]. To fully support such
+tokens, Uniswap v2 includes a “lock” that directly prevents reentrancy to all public state-
+changing functions. This also protects against reentrancy from the user-speciﬁed callback
+in a ﬂash swap, as described in section 2.3.
+3.4 Initialization of liquidity token supply
+WhenanewliquidityproviderdepositstokensintoanexistingUniswappair,thenumber
+of liquidity tokens minted is computed based on the existing quantity of tokens:
+x
+s = deposited ·s (12)
+minted x starting
+starting
+But what if they are the ﬁrst depositor? In that case, x is 0, so this formula will
+starting
+not work.
+Uniswapv1setstheinitialsharesupplytobeequaltotheamountofETHdeposited(in
+wei). This was a somewhat reasonable value, because if the initial liquidity was deposited
+at the correct price, then 1 liquidity pool share (which, like ETH, is an 18-decimal token)
+would be worth approximately 2 ETH.
+However, this meant that the value of a liquidity pool share was dependent on the ratio
+at which liquidity was initially deposited, which was fairly arbitrary, especially since there
+wasnoguaranteethatthatratioreﬂectedthetrueprice. Additionally,Uniswapv2supports
+arbitrary pairs, so many pairs will not include ETH at all.
+Instead, Uniswap v2 initially mints shares equal to the geometric mean of the amounts
+deposited:
+√
+s = x ·y (13)
+minted deposited deposited
+This formula ensures that the value of a liquidity pool share at any time is essentially
+independent of the ratio at which liquidity was initially deposited. For example, suppose
+that the price of 1 ABC is currently 100 XYZ. If the initial deposit had been 2 ABC and
+√
+200 XYZ (a ratio of 1:100), the depositor would have received 2·200=20 shares. Those
+shares should now still be worth 2 ABC and 200 XYZ, plus accumulated fees.
+If the initial deposit had been 2 ABC and 800 XYZ (a ratio of 1:400), the depositor
+√
+would have received 2·800=40 pool shares.10
+The above formula ensures that a liquidity pool share will never be worth less than
+the geometric mean of the reserves in that pool. However, it is possible for the value of
+9Asdescribedaboveinsection3.2,Uniswapv2coredoesnotusetransferFrom().
+10This also reduces the likelihood of rounding errors, since the number of bits in the quantity of shares
+will be approximately the mean of the number of bits in the quantity of asset X in the reserves, and the
+numberofbitsinthequantityofassetYinthereserves:
+√ log x+log y
+log x·y= 2 2 (14)
+2 2
+8
+a liquidity pool share to grow over time, either by accumulating trading fees or through
+“donations” to the liquidity pool. In theory, this could result in a situation where the value
+of the minimum quantity of liquidity pool shares (1e-18 pool shares) is worth so much that
+it becomes infeasible for small liquidity providers to provide any liquidity.
+Tomitigatethis, Uniswapv2burnstheﬁrst1e-15(0.000000000000001)poolsharesthat
+are minted (1000 times the minimum quantity of pool shares), sending them to the zero
+address instead of to the minter. This should be a negligible cost for almost any token
+pair.11 But it dramatically increases the cost of the above attack. In order to raise the
+value of a liquidity pool share to $100, the attacker would need to donate $100,000 to the
+pool, which would be permanently locked up as liquidity.
+3.5 Wrapping ETH
+The interface for transacting with Ethereum’s native asset, ETH, is diﬀerent from the
+standardinterfaceforinteractingwithERC-20tokens. Asaresult,manyotherprotocolson
+Ethereum do not support ETH, instead using a canonical ”wrapped ETH” token, WETH
+[6].
+Uniswap v1 is an exception. Since every Uniswap v1 pair included ETH as one asset, it
+made sense to handle ETH directly, which was slightly more gas-eﬃcient.
+Since Uniswap v2 supports arbitrary ERC-20 pairs, it now no longer makes sense to
+support unwrapped ETH. Adding such support would double the size of the core codebase,
+and risks fragmentation of liquidity between ETH and WETH pairs12. Native ETH needs
+to be wrapped into WETH before it can be traded on Uniswap v2.
+3.6 Deterministic pair addresses
+As in Uniswap v1, all Uniswap v2 pair contracts are instantiated by a single factory
+contract. In Uniswap v1, these pair contracts were created using the CREATE opcode,
+which meant that the address of such a contract depended on the order in which that pair
+was created. Uniswap v2 uses Ethereum’s new CREATE2 opcode [8] to generate a pair
+contract with a deterministic address. This means that it is possible to calculate a pair’s
+address (if it exists) oﬀ-chain, without having to look at the chain state.
+3.7 Maximum token balance
+Inordertoeﬃcientlyimplementtheoraclemechanism,Uniswapv2onlysupportreserve
+balances of up to 2112−1. This number is high enough to support 18-decimal-place tokens
+with a totalSupply over 1 quadrillion.
+If either reserve balance does go above 2112−1, any call to the swap function will begin
+to fail (due to a check in the _update() function). To recover from this situation, any user
+can call the skim() function to remove excess assets from the liquidity pool.
+11Intheory,therearesomecaseswherethisburncouldbenon-negligible,suchaspairsbetweenhigh-value
+zero-decimal tokens. However, these pairs are a poor ﬁt for Uniswap anyway, since rounding errors would
+maketradinginfeasible.
+12Asofthiswriting,oneofthehighest-liquiditypairsonUniswapv1isthepairbetweenETHandWETH
+[7].
+9
+References
+[1] HaydenAdams.2018.url:https://hackmd.io/@477aQ9OrQTCbVR3fq1Qzxg/HJ9jLsfTz?
+type=view.
+[2] Guillermo Angeris et al. An analysis of Uniswap markets. 2019. arXiv: 1911.03380
+[q-fin.TR].
+[3] samczsun. Taking undercollateralized loans for fun and for proﬁt. Sept. 2019. url:
+https://samczsun.com/taking-undercollateralized-loans-for-fun-and-
+for-profit/.
+[4] Fabian Vogelsteller and Vitalik Buterin. Nov. 2015. url: https://eips.ethereum.
+org/EIPS/eip-20.
+[5] JordiBaylinaJacquesDaﬄonandThomasShababi.EIP777:ERC777TokenStandard.
+Nov. 2017. url: https://eips.ethereum.org/EIPS/eip-777.
+[6] Radar. WTF is WETH? url: https://weth.io/.
+[7] Uniswap.info.WrappedEther(WETH).url:https://uniswap.info/token/0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2.
+[8] VitalikButerin.EIP1014:SkinnyCREATE2.Apr.2018.url:https://eips.ethereum.
+org/EIPS/eip-1014.
+4 Disclaimer
+This paper is for general information purposes only. It does not constitute investment
+advice or a recommendation or solicitation to buy or sell any investment and should not
+be used in the evaluation of the merits of making any investment decision. It should not
+be relied upon for accounting, legal or tax advice or investment recommendations. This
+paper reﬂects current opinions of the authors and is not made on behalf of Paradigm or its
+aﬃliatesanddoesnotnecessarilyreﬂecttheopinionsofParadigm,itsaﬃliatesorindividuals
+associatedwithParadigm. Theopinionsreﬂectedhereinaresubjecttochangewithoutbeing
+updated.
+10
