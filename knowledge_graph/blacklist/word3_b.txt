@@ -1,0 +1,16 @@
+cid17,cid16,cid17
+pass,since,last
+time,pass,since
+new,user,may
+two,different,type
+tx,tx,tx
+hash,hash,block
+allow,two,will
+trust,allow,two
+party,may,use
+yonatan,sompolinsky,aviv
+would,like,able
+asset,eg,eth
+allow,user,pay
+also,provide,strong
+hash,block,header
