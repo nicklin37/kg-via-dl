@@ -14,3 +14,8 @@ asset,eg,eth
 allow,user,pay
 also,provide,strong
 hash,block,header
+silvio,micali,algorand
+two,reason,first
+see,next,section
+note,computer,science
+discuss,previous,section
