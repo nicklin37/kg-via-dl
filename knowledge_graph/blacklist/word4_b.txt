@@ -2,3 +2,5 @@ cid17,cid16,cid17,cid16
 cid16,cid17,cid16,cid17
 tx,tx,tx,tx
 instead,trust,allow,two
+yonatan,sompolinsky,aviv,zohar
+least,one,honest
