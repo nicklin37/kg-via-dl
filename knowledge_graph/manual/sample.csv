@@ -1,0 +1,49 @@
+,Avalanche.txt,Algorand.txt,Bitcoin.txt,Ethereum.txt,Chainlink.txt
+0,"identiﬁes patches. The ﬁrst public release, codenamed Avalanche Borealis, is v. 1.0.0. The native token
+","Indeed, in period p−1, if there exists a certiﬁed value v, then v (cid:54)= ⊥, at least t+1 honest users
+","Completely non-reversible transactions are not really possible, since financial institutions cannot 
+","The Merkle tree protocol is arguably essential to long-term sustainability. A ""full node"" in the Bitcoin
+","sus protocols, e.g., [103, 120], there would be formidable challenges in realizing oracle functionality,
+"
+1,"same mostly stable view of the network. We anticipate setting the minimum staking time on the order of a
+","(cid:96) is honest, then all honest users ﬁnish the protocol in period p by their own time 6λ, with the
+","less than its input value, the difference is a transaction fee that is added to the incentive value of 
+","accessible from contract code, as a source of randomness), and give X ether to the first entity to supply a
+","forms, e.g., layer-2 systems, TEE-based blockchains [80], etc. Our goal is to support and generalize
+"
+2,"Sharding Sharding is the process of partitioning various system resources in order to increase performance
+","a long network partition happens, the timers will all be reset shortly after the partition is resolved
+","transactions are hashed in a Merkle Tree [7][2][5], with only the root included in the block's hash. 
+","to its currency holdings and not computational resources; the discussion of the relative merits of the two
+","of correctness for the reports they output and provide these attestations to second-tier nodes on an
+"
+3,"possible per the algorithmic requirements, in $AVAX nodes do not need to maintain parts of the DAG that
+","value for period p+1 is v. Inductively, any future periods p(cid:48) > p can only have v as a potential
+","it continuously until he is lucky enough to get far enough ahead, then executing the transaction at 
+","decentralized currency was for the first time implemented in practice by Satoshi Nakamoto, combining
+","range of possible values for the median implied by the resulting functionally-signed value covers all
+"
+4,"– ∆ : Staking amount, denominated in $AVAX. This value deﬁnes the minimal stake required to be placed as
+","value v(cid:48) has these many soft-votes. Thus honest users all cert-vote v by time 3λ. Accordingly,
+","[5] S. Haber, W.S. Stornetta, ""Secure names for bit-strings,"" In Proceedings of the 4th ACM Conference 
+","of deciding who gets to influence the consensus, while simultaneously preventing sybil attacks. It does
+","censorship), added low-level complexity, access restrictions on some data sources (e.g., proprietary
+"
+5,"is able to support a global network of potentially hundreds of millions of internet-connected, low and high-
+","In Communication Setting 1, Steps 4 and 5 can be combined into one step. We keep them separate to better
+","himself, but by linking it to a place in the chain, he can see that a network node has accepted it, 
+","currencies and financial instruments (""colored coins""↗ ), the ownership of an underlying physical device
+","delivered—as opposed to, e.g., physical goods ordered in online shops. Put another way, in the oracle
+"
+6,"of the system. In almost every proof-of-stake protocol that attempts to scale to a large participant set,
+","2Our protocol also works using veriﬁable random functions (VRFs) [5], which can be constructed under concrete
+","By convention, the first transaction in a block is a special transaction that starts a new coin owned 
+","including stale blocks in the calculation of which chain is the ""longest""; that is to say, not just the parent
+","arrives before(cid:13)2, but the miner instead sequences it after(cid:13)2. In contrast, Fig.(cid:13)B shows
+"
+7,"model that enables dynamic changes to key economic parameters. Finally, in Section 5 explores various
+","the actual blocks. Our protocol allows the users to soft-vote for the hashes in Step 2 without seeing
+","messages.  If a node does not receive a block, it will request it when it receives the next block and 
+","3.  Initialize gas = 2000; assuming the transaction is 170 bytes long and the byte-fee is 5, subtract 850 so
+","These are loosely analogous to fake reviews on internet sites, except that the problem is easier in the
+"
