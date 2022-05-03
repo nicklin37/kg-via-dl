@@ -1,0 +1,3 @@
+partitioning,various,system,resources
+veriﬁable,random,function,vrfs
+layer-2,systems,TEE-based,blockchains
